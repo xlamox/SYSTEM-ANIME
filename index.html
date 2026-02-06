@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>RISE SYSTEM™</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RISE SYSTEM — CINEMATIC INTRO</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,154 +12,306 @@
 
   <style>
     :root{
-      --bg:#070a12;
-      --fg:rgba(255,255,255,.92);
-      --c1:#00e5ff;
-      --c2:#c86bff;
-      --c3:#22ff9a;
-      --c4:#ffbe50;
+      --bg: 235 35% 6%;
+      --fg: 210 40% 96%;
+      --c1: 195 100% 55%;
+      --c2: 280 85% 64%;
+      --c3: 155 80% 48%;
+      --c4: 35 95% 58%;
+      --danger: 0 84% 60%;
+      --glass: rgba(255,255,255,.06);
+      --line: rgba(255,255,255,.14);
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
-      background:var(--bg);
-      color:var(--fg);
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background: hsl(var(--bg));
+      color: hsl(var(--fg));
       overflow:hidden;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
 
-    /* ===== Animated Nebula (no mouse) ===== */
-    .nebula{
+    /* ===== BACKGROUND STACK ===== */
+    .bg{
       position:fixed; inset:-25%;
-      background:
-        radial-gradient(1100px 850px at 18% 22%, rgba(200,107,255,.22), transparent 62%),
-        radial-gradient(1200px 900px at 82% 18%, rgba(0,229,255,.22), transparent 62%),
-        radial-gradient(1100px 860px at 22% 86%, rgba(34,255,154,.13), transparent 62%),
-        radial-gradient(900px 740px at 86% 84%, rgba(255,190,80,.10), transparent 62%),
-        linear-gradient(#070a12,#080b16,#0a0f1d);
-      background-size:150% 150%;
-      animation: nebMove 12.8s ease-in-out infinite;
-      filter:saturate(1.08);
-      transform:translateZ(0);
       z-index:-5;
+      background:
+        radial-gradient(1200px 900px at 12% 18%, hsl(var(--c2)/.22), transparent 60%),
+        radial-gradient(1200px 900px at 88% 22%, hsl(var(--c1)/.22), transparent 60%),
+        radial-gradient(1100px 850px at 22% 86%, hsl(var(--c3)/.18), transparent 60%),
+        radial-gradient(900px 700px at 85% 80%, hsl(var(--c4)/.10), transparent 62%),
+        linear-gradient(to bottom, hsl(235 35% 6%), hsl(240 32% 7%));
+      background-size: 140% 140%;
+      animation: drift 16s ease-in-out infinite;
+      will-change: transform, filter, background-position;
+      transform: translateZ(0);
     }
-    @keyframes nebMove{
-      0%{background-position:42% 58%; filter:hue-rotate(0deg); transform:scale(1);}
-      50%{background-position:62% 38%; filter:hue-rotate(12deg); transform:scale(1.035);}
-      100%{background-position:42% 58%; filter:hue-rotate(0deg); transform:scale(1);}
-    }
-
-    .scan{
-      position:fixed; inset:0;
-      background:repeating-linear-gradient(to bottom,
-        rgba(255,255,255,.06) 0px,
-        rgba(255,255,255,.06) 1px,
-        transparent 2px,
-        transparent 7px
-      );
-      opacity:.09;
-      mix-blend-mode:overlay;
+    .bg::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        conic-gradient(from 200deg at 50% 50%,
+          transparent 0deg,
+          hsl(var(--c1)/.07) 80deg,
+          transparent 140deg,
+          hsl(var(--c2)/.08) 240deg,
+          transparent 360deg);
+      filter: blur(22px);
+      opacity:.95;
+      animation: spin 28s linear infinite;
+      mix-blend-mode: screen;
       pointer-events:none;
-      z-index:-4;
+    }
+    @keyframes drift{
+      0%   { background-position: 48% 55%; transform: scale(1); filter: hue-rotate(0deg); }
+      50%  { background-position: 62% 40%; transform: scale(1.04); filter: hue-rotate(14deg); }
+      100% { background-position: 48% 55%; transform: scale(1); filter: hue-rotate(0deg); }
+    }
+    @keyframes spin{ from{ transform: rotate(0deg);} to{ transform: rotate(360deg);} }
+
+    canvas#space, canvas#dust{
+      position:fixed; inset:0;
+      z-index:-3;
+      pointer-events:none;
     }
 
     .vignette{
-      position:fixed; inset:0;
-      background:radial-gradient(circle at center, transparent 54%, rgba(0,0,0,.70) 100%);
-      pointer-events:none;
-      z-index:-3;
-    }
-
-    /* ===== subtle particles ===== */
-    .dust{
-      position:fixed; inset:0;
-      pointer-events:none;
-      z-index:-2;
+      position:fixed; inset:0; z-index:-2;
       background:
-        radial-gradient(circle at 18% 30%, rgba(255,255,255,.05), transparent 30%),
-        radial-gradient(circle at 70% 20%, rgba(255,255,255,.04), transparent 32%),
-        radial-gradient(circle at 30% 85%, rgba(255,255,255,.04), transparent 30%),
-        radial-gradient(circle at 85% 75%, rgba(255,255,255,.03), transparent 32%);
-      opacity:.55;
-      filter:blur(.3px);
-      animation:dust 9s ease-in-out infinite;
-    }
-    @keyframes dust{
-      0%{transform:translateY(0) translateX(0); opacity:.50}
-      50%{transform:translateY(-10px) translateX(8px); opacity:.75}
-      100%{transform:translateY(0) translateX(0); opacity:.50}
+        radial-gradient(circle at 50% 42%, transparent 0 55%, rgba(0,0,0,.78) 92%),
+        linear-gradient(to bottom, rgba(0,0,0,.12), rgba(0,0,0,.55));
+      pointer-events:none;
     }
 
-    /* ===== Layout ===== */
+    .grid{
+      position:fixed; inset:0; z-index:-1;
+      background:
+        linear-gradient(to right, rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 66px 66px;
+      opacity:.18;
+      pointer-events:none;
+      mask-image: radial-gradient(circle at 50% 35%, rgba(0,0,0,.95), rgba(0,0,0,.12) 62%, transparent 78%);
+      animation: gridShift 10s ease-in-out infinite;
+    }
+    @keyframes gridShift{
+      0%,100%{ transform: translate3d(0,0,0); opacity:.16; }
+      50%{ transform: translate3d(12px,-10px,0); opacity:.22; }
+    }
+
+    .noise{
+      position:fixed; inset:0; z-index:0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+      opacity:.055;
+      pointer-events:none;
+    }
+
+    /* ===== ROOT ===== */
+    #root{ position:relative; z-index:1; height:100%; }
+
+    /* ===== PORTAL (CINEMATIC) ===== */
+    .portalWrap{
+      position:fixed; inset:0;
+      z-index:1;
+      pointer-events:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      opacity: .85;
+      filter: saturate(1.1);
+    }
+    .portal{
+      width:min(880px, 92vw);
+      height:min(520px, 70vh);
+      position:relative;
+      border-radius: 999px;
+      transform: translateZ(0);
+      opacity:.85;
+    }
+    .portal::before{
+      content:"";
+      position:absolute; inset:-14%;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 50% 50%,
+          rgba(0,0,0,0) 0 44%,
+          hsl(var(--c1)/.16) 48%,
+          hsl(var(--c2)/.14) 58%,
+          rgba(0,0,0,0) 70%),
+        radial-gradient(circle at 50% 50%,
+          rgba(0,0,0,0) 0 58%,
+          rgba(255,255,255,.08) 60%,
+          rgba(0,0,0,0) 74%);
+      filter: blur(10px);
+      animation: portalPulse 2.9s ease-in-out infinite;
+      mix-blend-mode: screen;
+    }
+    .portal::after{
+      content:"";
+      position:absolute; inset:3%;
+      border-radius: 999px;
+      background:
+        conic-gradient(from 180deg at 50% 50%,
+          hsl(var(--c1)/.10),
+          rgba(255,255,255,0) 22%,
+          hsl(var(--c2)/.10) 48%,
+          rgba(255,255,255,0) 72%,
+          hsl(var(--c3)/.10));
+      filter: blur(18px);
+      animation: portalSpin 12s linear infinite;
+      opacity:.85;
+      mix-blend-mode: screen;
+    }
+    @keyframes portalPulse{
+      0%,100%{ transform: scale(1); opacity:.70; }
+      50%{ transform: scale(1.03); opacity:.92; }
+    }
+    @keyframes portalSpin{ to{ transform: rotate(360deg);} }
+
+    /* ===== PANEL ===== */
     .wrap{
       height:100%;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:24px;
+      padding: 26px 16px;
     }
     .panel{
-      width:min(980px, 100%);
-      text-align:center;
-      padding:26px 18px 18px;
+      width: min(1040px, 100%);
+      border-radius: 30px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.24);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,.06) inset,
+        0 45px 140px rgba(0,0,0,.58);
+      overflow:hidden;
+      position:relative;
+      backdrop-filter: blur(10px);
+    }
+    .panel::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(900px 420px at 50% 0%, hsl(var(--c1)/.20), transparent 62%),
+        radial-gradient(700px 380px at 16% 24%, hsl(var(--c2)/.12), transparent 64%),
+        radial-gradient(700px 420px at 86% 18%, hsl(var(--c3)/.10), transparent 64%);
+      filter: blur(12px);
+      opacity:.88;
+      pointer-events:none;
+    }
+    .inner{
+      position:relative;
+      padding: 34px 22px 28px;
+    }
+    @media (min-width: 860px){
+      .inner{ padding: 46px 54px 40px; }
     }
 
+    /* ===== HUD / SCAN ===== */
+    .scanline{
+      position:absolute;
+      inset:-45% 0;
+      z-index:2;
+      pointer-events:none;
+      opacity:.10;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,.45), transparent);
+      animation: scan 4.3s ease-in-out infinite;
+      mix-blend-mode: overlay;
+      filter: blur(.2px);
+    }
+    @keyframes scan{
+      0%{ transform: translateY(-35%); opacity:.05; }
+      50%{ transform: translateY(35%); opacity:.14; }
+      100%{ transform: translateY(-35%); opacity:.05; }
+    }
+    .hudCorners{
+      position:absolute; inset:14px;
+      border-radius: 20px;
+      pointer-events:none;
+      opacity:.65;
+      background:
+        linear-gradient(to right, rgba(255,255,255,.22), transparent 38%) top left / 120px 2px no-repeat,
+        linear-gradient(to bottom, rgba(255,255,255,.22), transparent 38%) top left / 2px 120px no-repeat,
+        linear-gradient(to left, rgba(255,255,255,.22), transparent 38%) top right / 120px 2px no-repeat,
+        linear-gradient(to bottom, rgba(255,255,255,.22), transparent 38%) top right / 2px 120px no-repeat,
+        linear-gradient(to right, rgba(255,255,255,.22), transparent 38%) bottom left / 120px 2px no-repeat,
+        linear-gradient(to top, rgba(255,255,255,.22), transparent 38%) bottom left / 2px 120px no-repeat,
+        linear-gradient(to left, rgba(255,255,255,.22), transparent 38%) bottom right / 120px 2px no-repeat,
+        linear-gradient(to top, rgba(255,255,255,.22), transparent 38%) bottom right / 2px 120px no-repeat;
+      filter: drop-shadow(0 0 18px rgba(0,229,255,.08));
+    }
+
+    /* ===== BADGE ===== */
     .badge{
       display:inline-flex;
       align-items:center;
       gap:10px;
-      padding:10px 14px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.18);
-      box-shadow:0 0 0 1px rgba(255,255,255,.04) inset;
-      margin-bottom:18px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--glass);
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+      letter-spacing:.4px;
     }
-    .dot{
-      width:10px;height:10px;border-radius:999px;
-      background:var(--c1);
-      box-shadow:0 0 18px rgba(0,229,255,.55);
+    .spark{
+      width: 10px; height:10px; border-radius:50%;
+      background: hsl(var(--c1));
+      box-shadow: 0 0 22px hsl(var(--c1)/.65);
     }
-    .brand{
-      font-family:Oxanium, sans-serif;
-      letter-spacing:.9px;
-      font-weight:900;
-    }
-    .sub{opacity:.65; font-size:12px}
 
-    /* ===== SYSTEM Title ===== */
-    .system{
-      font-family:Oxanium, sans-serif;
-      font-size:clamp(56px, 9vw, 96px);
-      letter-spacing:7px;
+    /* ===== TITLES ===== */
+    .hero{ margin-top: 18px; display:flex; flex-direction:column; gap: 14px; }
+    .headline{
+      font-family: Oxanium, Inter, system-ui, sans-serif;
+      font-weight: 700;
+      line-height: 1.02;
+      font-size: clamp(34px, 5.4vw, 78px);
       margin:0;
-      line-height:1;
-      text-shadow:0 0 55px rgba(0,229,255,.12);
+      text-align:left;
+      letter-spacing: .4px;
+    }
+    .subline{
+      margin:0;
+      color: rgba(255,255,255,.76);
+      max-width: 720px;
+      font-size: 14.5px;
+      line-height: 1.75;
     }
 
-    .glitch{
-      position:relative;
+    /* ===== SYSTEM GLITCH (STRONG) ===== */
+    .sys{
+      position: relative;
       display:inline-block;
+      letter-spacing: 7px;
+      text-shadow: 0 0 55px rgba(0,229,255,.12);
+      transform: translateZ(0);
     }
-    .glitch::before,
-    .glitch::after{
-      content:attr(data-text);
+    .sys.glitch{
+      position:relative;
+    }
+    .sys.glitch::before,
+    .sys.glitch::after{
+      content: attr(data-text);
       position:absolute; inset:0;
       opacity:.70;
       pointer-events:none;
     }
-    .glitch::before{
-      color:var(--c2);
-      transform:translate(2px,0);
+    .sys.glitch::before{
+      color: hsl(var(--c2));
+      transform: translate(2px,0);
       clip-path: inset(0 0 54% 0);
-      animation:g1 2.1s infinite linear;
+      animation: g1 2.1s infinite linear;
+      mix-blend-mode: screen;
     }
-    .glitch::after{
-      color:var(--c1);
-      transform:translate(-2px,0);
+    .sys.glitch::after{
+      color: hsl(var(--c1));
+      transform: translate(-2px,0);
       clip-path: inset(54% 0 0 0);
-      animation:g2 2.6s infinite linear;
+      animation: g2 2.6s infinite linear;
+      mix-blend-mode: screen;
     }
     @keyframes g1{
       0%,100%{filter:none}
@@ -173,537 +326,847 @@
       48%{transform:translate(-4px,0)}
     }
 
-    /* ===== The "loading inside text" line ===== */
-    .mission{
-      margin:14px auto 0;
-      width:min(860px, 100%);
-    }
-
-    .loadText{
-      position:relative;
-      display:inline-block;
-      font-family:Oxanium, sans-serif;
-      font-weight:900;
-      font-size:clamp(22px, 3.2vw, 36px);
-      letter-spacing:1px;
-      text-transform:uppercase;
-      padding:10px 14px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.03);
-      box-shadow:0 0 0 1px rgba(255,255,255,.04) inset;
-      overflow:hidden;
-    }
-
-    /* Base outline text */
-    .loadText .outline{
-      position:relative;
-      color:rgba(255,255,255,.18);
-      text-shadow:0 0 18px rgba(200,107,255,.08);
-      -webkit-text-stroke: 1px rgba(255,255,255,.10);
-      z-index:1;
-    }
-
-    /* Filled text clipped by progress */
-    .loadText .fillLayer{
-      position:absolute;
-      inset:0;
+    /* ===== WORD CHIP ===== */
+    .chipRow{
       display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:2;
-      width:100%;
-      pointer-events:none;
-    }
-
-    .loadText .fillLayer span{
-      background:
-        linear-gradient(90deg, rgba(0,229,255,.95), rgba(200,107,255,.95), rgba(34,255,154,.75));
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:transparent;
-      text-shadow:0 0 24px rgba(0,229,255,.12), 0 0 35px rgba(200,107,255,.10);
-      filter:saturate(1.2);
-      transform:translateZ(0);
-    }
-
-    /* mask controlling progress */
-    .mask{
-      position:absolute;
-      inset:0;
-      width:0%;
-      overflow:hidden;
-      transition:width .15s ease;
-    }
-
-    /* shimmer sweep (professional vibe) */
-    .shine{
-      position:absolute;
-      top:-30%;
-      left:-35%;
-      width:35%;
-      height:160%;
-      background:linear-gradient(90deg, transparent, rgba(255,255,255,.20), transparent);
-      transform:skewX(-18deg);
-      opacity:.55;
-      filter:blur(.2px);
-      animation: sweep 1.25s linear infinite;
-      mix-blend-mode:screen;
-      pointer-events:none;
-    }
-    @keyframes sweep{
-      0%{transform:translateX(0) skewX(-18deg)}
-      100%{transform:translateX(420%) skewX(-18deg)}
-    }
-
-    /* tiny percent under */
-    .mini{
-      margin-top:10px;
-      font-family:ui-monospace, Menlo, Monaco, Consolas, monospace;
-      font-size:12px;
-      letter-spacing:2px;
-      opacity:.70;
-    }
-
-    /* ===== Enter only ===== */
-    .enterWrap{
-      margin-top:18px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:12px;
       flex-wrap:wrap;
+      gap: 10px 12px;
+      align-items:center;
+      font-family: Oxanium, Inter, system-ui, sans-serif;
+      letter-spacing:.7px;
+      line-height: 1.05;
+    }
+    .chipRow .fixed{
+      font-size: clamp(22px, 3.2vw, 40px);
+      color: rgba(255,255,255,.86);
+    }
+    .chip{
+      font-size: clamp(22px, 3.2vw, 40px);
+      position:relative;
+      padding: 3px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset;
+      overflow:hidden;
+    }
+    .chip::before{
+      content:"";
+      position:absolute; inset:-40%;
+      background:
+        radial-gradient(circle at 30% 30%, hsl(var(--c1)/.24), transparent 55%),
+        radial-gradient(circle at 70% 60%, hsl(var(--c2)/.22), transparent 55%),
+        radial-gradient(circle at 40% 80%, hsl(var(--c3)/.16), transparent 55%);
+      filter: blur(14px);
+      animation: chipGlow 3.6s ease-in-out infinite;
+      opacity:.92;
+      pointer-events:none;
+    }
+    @keyframes chipGlow{
+      0%,100%{ transform: translate3d(-10px, 8px, 0) scale(1); }
+      50%{ transform: translate3d(12px, -10px, 0) scale(1.04); }
+    }
+    .chip span{ position:relative; color: rgba(255,255,255,.93); }
+
+    .heroWord{
+      color: hsl(var(--c1));
+      text-shadow: 0 0 40px hsl(var(--c1)/.20);
+    }
+
+    /* ===== ACTIONS ===== */
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top: 18px;
+      align-items:center;
     }
     .btn{
+      appearance:none;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.92);
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-weight: 700;
+      letter-spacing:.35px;
       cursor:pointer;
-      border-radius:14px;
-      padding:12px 18px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.06);
-      color:rgba(255,255,255,.95);
-      font-weight:950;
-      letter-spacing:.9px;
-      transition:.18s;
-      min-width:240px;
-      text-transform:uppercase;
-      font-family:Oxanium, sans-serif;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+      backdrop-filter: blur(10px);
     }
-    .btn:hover{background:rgba(255,255,255,.10)}
-    .btn[disabled]{opacity:.45; cursor:not-allowed}
+    .btn:hover{ background: rgba(255,255,255,.10); transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0px) scale(.99); }
 
-    .kbd{
-      display:inline-block;
-      padding:2px 8px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(255,255,255,.06);
-      font-family:ui-monospace, Menlo, Monaco, Consolas, monospace;
-      font-size:12px;
-      opacity:.85;
-    }
-
-    .ready{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      opacity:0;
-      transform:translateY(6px);
-      transition:.25s ease;
-    }
-    .ready.on{opacity:.90; transform:translateY(0)}
-    .pulse{
-      width:9px;height:9px;border-radius:999px;
-      background:var(--c2);
-      box-shadow:0 0 18px rgba(200,107,255,.45);
-      animation:pulse 1.05s ease-in-out infinite;
-    }
-    @keyframes pulse{
-      0%,100%{transform:scale(1); opacity:.7}
-      50%{transform:scale(1.7); opacity:1}
-    }
-
-    /* ===== Ultra portal transition ===== */
-    .portal{
-      position:fixed; inset:0;
-      display:grid;
-      place-items:center;
-      pointer-events:none;
-      opacity:0;
-      z-index:50;
-      transition:opacity .18s ease;
-    }
-    .portal.on{opacity:1}
-
-    .portalField{
+    .btnPrimary{
+      border-color: hsl(var(--c1)/.28);
+      background: linear-gradient(135deg, hsl(var(--c1)/.24), hsl(var(--c2)/.16));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.05) inset,
+        0 24px 100px rgba(0,0,0,.38),
+        0 0 80px hsl(var(--c1)/.14);
       position:relative;
-      width:min(92vmin, 820px);
-      aspect-ratio:1/1;
-      border-radius:999px;
-      overflow:visible;
-      transform:scale(.65);
-      opacity:0;
-      filter:saturate(1.2);
-      animation:none;
+      overflow:hidden;
     }
-
-    /* outer aura */
-    .portalField::before{
+    .btnPrimary::before{
       content:"";
-      position:absolute; inset:-10%;
-      border-radius:999px;
-      background: radial-gradient(circle at center,
-        rgba(200,107,255,.20),
-        rgba(0,229,255,.10),
-        rgba(0,0,0,0) 62%);
-      filter:blur(18px);
-      opacity:.0;
-      transform:scale(.95);
-      animation:none;
+      position:absolute; inset:-60%;
+      background: radial-gradient(circle at 40% 40%, rgba(255,255,255,.18), transparent 50%);
+      filter: blur(18px);
+      transform: translate3d(-18px, 10px, 0);
+      opacity:.75;
+      transition: transform .2s ease;
+      pointer-events:none;
+    }
+    .btnPrimary:hover::before{ transform: translate3d(18px, -12px, 0); }
+
+    .hint{
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      letter-spacing:.2px;
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      padding: 3px 8px;
+      border-radius: 10px;
+      color: rgba(255,255,255,.72);
     }
 
-    /* core ring */
-    .ring{
+    /* ===== BOTTOM HUD ===== */
+    .echo{
+      margin-top: 18px;
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+      color: rgba(255,255,255,.55);
+      font-size: 12px;
+    }
+
+    /* ===== TRANSITION OUT (panel) ===== */
+    .out{
+      animation: out 760ms cubic-bezier(.2,.9,.15,1) forwards;
+    }
+    @keyframes out{
+      0%{ transform: scale(1); opacity:1; filter: blur(0px); }
+      100%{ transform: scale(1.03); opacity:0; filter: blur(6px); }
+    }
+
+    /* ============================================================
+       ✅ HUD CYBER EYES OVERLAY (MERGED)
+       ============================================================ */
+    .hudOverlay{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.52);
+      backdrop-filter: blur(8px);
+    }
+    .hudOverlay.show{ display:flex; }
+
+    .hudStage{
+      width: min(980px, 92%);
+      height: min(560px, 75vh);
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 50px 160px rgba(0,0,0,.62);
+      position:relative;
+      overflow:hidden;
+      transform: translateZ(0);
+    }
+    .hudStage::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(900px 360px at 50% 0%, hsl(var(--c1)/.14), transparent 64%),
+        radial-gradient(700px 360px at 18% 34%, hsl(var(--c2)/.12), transparent 64%),
+        radial-gradient(700px 360px at 82% 34%, hsl(var(--c3)/.10), transparent 64%);
+      filter: blur(16px);
+      opacity:.92;
+      pointer-events:none;
+    }
+
+    .hudScan{
+      position:absolute; inset:-30% 0;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,.34), transparent);
+      opacity:.08;
+      mix-blend-mode: overlay;
+      filter: blur(.2px);
+      pointer-events:none;
+      animation: scanMove 3.9s ease-in-out infinite;
+    }
+    @keyframes scanMove{
+      0%{ transform: translateY(-32%); opacity:.05; }
+      50%{ transform: translateY(32%); opacity:.12; }
+      100%{ transform: translateY(-32%); opacity:.05; }
+    }
+    .hudNoise{
+      position:absolute; inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+      opacity:.06;
+      pointer-events:none;
+      mix-blend-mode: overlay;
+    }
+
+    .hudFrame{
+      position:absolute; inset:18px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.05) inset;
+      pointer-events:none;
+    }
+    .hudFrame::before,
+    .hudFrame::after{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius: 22px;
+      background:
+        linear-gradient(90deg, hsl(var(--c1)/.18), transparent 35%),
+        linear-gradient(-90deg, hsl(var(--c2)/.16), transparent 35%),
+        linear-gradient(to bottom, rgba(255,255,255,.08), transparent 30%);
+      opacity:.5;
+      filter: blur(10px);
+      pointer-events:none;
+      mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,.9), transparent 70%);
+    }
+
+    .hudCenter{
+      position:absolute;
+      left:50%; top:18px;
+      transform: translateX(-50%);
+      z-index:8;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      backdrop-filter: blur(10px);
+      color: rgba(255,255,255,.80);
+      font-size: 12px;
+      letter-spacing: .45px;
+      pointer-events:none;
+    }
+    .dot{
+      width:8px; height:8px; border-radius:50%;
+      background: hsl(var(--c1));
+      box-shadow: 0 0 14px hsl(var(--c1)/.6);
+    }
+
+    .hudEyes{
+      position:absolute;
+      left:50%; top:50%;
+      transform: translate(-50%,-50%);
+      width: min(720px, 92%);
+      height: 250px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12%;
+    }
+    .eye{
+      position:relative;
+      width: 44%;
+      height: 190px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.05) inset,
+        0 60px 160px rgba(0,0,0,.62);
+      overflow:hidden;
+      transform: translateZ(0);
+    }
+    .eye::before{
+      content:"";
+      position:absolute;
+      left:-15%;
+      right:-15%;
+      top:-22%;
+      height: 55%;
+      background:
+        radial-gradient(80% 80% at 50% 100%,
+          rgba(0,0,0,0) 0 28%,
+          rgba(0,0,0,.70) 58%,
+          rgba(0,0,0,0) 90%);
+      transform: skewX(-12deg);
+      opacity:.86;
+      z-index:6;
+      pointer-events:none;
+    }
+
+    .lidTop, .lidBottom{
+      position:absolute; left:-10%; right:-10%;
+      background: linear-gradient(to bottom, rgba(0,0,0,.98), rgba(0,0,0,.72));
+      z-index:5;
+    }
+    .lidTop{ top:-2%; height: 64%; transform: translateY(0%); border-bottom: 1px solid rgba(255,255,255,.08); }
+    .lidBottom{
+      bottom:-2%;
+      height: 70%;
+      transform: translateY(0%);
+      background: linear-gradient(to top, rgba(0,0,0,.98), rgba(0,0,0,.72));
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .iris{
+      position:absolute;
+      inset: 18% 18%;
+      border-radius: 999px;
+      opacity:0;
+      transform: scale(.92);
+      z-index:2;
+      background:
+        radial-gradient(circle at 50% 50%,
+          rgba(0,0,0,.98) 0 18%,
+          rgba(255,255,255,.06) 19% 21%,
+          hsl(var(--c1)/.92) 24% 52%,
+          rgba(0,0,0,.92) 53% 100%);
+      box-shadow:
+        0 0 130px hsl(var(--c1)/.20),
+        0 0 0 1px rgba(255,255,255,.06) inset;
+      filter: saturate(1.2);
+    }
+    .pupil{
+      position:absolute;
+      left:50%; top:50%;
+      transform: translate(-50%,-50%);
+      width: 18%;
+      height: 18%;
+      border-radius: 999px;
+      background: rgba(0,0,0,.96);
+      box-shadow: 0 0 0 2px rgba(255,255,255,.08) inset;
+    }
+    .pupil::after{
+      content:"";
+      position:absolute;
+      left:50%; top:50%;
+      transform: translate(-50%,-50%);
+      width: 34%;
+      height: 34%;
+      border-radius: 999px;
+      background: hsl(var(--c2)/.9);
+      filter: blur(.2px);
+      box-shadow: 0 0 18px hsl(var(--c2)/.55);
+      opacity:.9;
+    }
+
+    .hudRing{
+      position:absolute;
+      inset: 10% 12%;
+      border-radius: 999px;
+      opacity:0;
+      transform: scale(.96);
+      z-index:3;
+      pointer-events:none;
+    }
+    .hudRing::before{
+      content:"";
       position:absolute; inset:0;
       border-radius:999px;
       background:
         conic-gradient(from 0deg,
-          rgba(200,107,255,0) 0deg,
-          rgba(200,107,255,.9) 55deg,
-          rgba(0,229,255,.8) 140deg,
-          rgba(34,255,154,.35) 220deg,
-          rgba(200,107,255,.9) 315deg,
-          rgba(200,107,255,0) 360deg);
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,.08) inset,
-        0 0 90px rgba(200,107,255,.18),
-        0 0 140px rgba(0,229,255,.10);
-      mask: radial-gradient(circle at center, transparent 53%, black 58%);
-      -webkit-mask: radial-gradient(circle at center, transparent 53%, black 58%);
+          transparent 0 20deg,
+          rgba(255,255,255,.12) 20deg 22deg,
+          transparent 22deg 55deg,
+          hsl(var(--c1)/.35) 55deg 58deg,
+          transparent 58deg 120deg,
+          rgba(255,255,255,.10) 120deg 122deg,
+          transparent 122deg 190deg,
+          hsl(var(--c2)/.30) 190deg 194deg,
+          transparent 194deg 360deg);
+      mask-image: radial-gradient(circle at 50% 50%, transparent 0 60%, rgba(0,0,0,1) 62% 100%);
+      filter: blur(.1px);
+      opacity:.95;
     }
-
-    /* inner swirl */
-    .swirl{
-      position:absolute; inset:10%;
+    .hudRing::after{
+      content:"";
+      position:absolute; inset: 14% 16%;
       border-radius:999px;
-      background:
-        radial-gradient(circle at center, rgba(200,107,255,.22), rgba(0,229,255,.10), rgba(0,0,0,0) 62%),
-        conic-gradient(from 180deg,
-          rgba(0,229,255,.0),
-          rgba(0,229,255,.25),
-          rgba(200,107,255,.35),
-          rgba(34,255,154,.10),
-          rgba(0,229,255,.0));
-      filter:blur(.4px);
-      opacity:.85;
-      transform:rotate(0deg);
-      animation:none;
+      border: 1px dashed rgba(255,255,255,.14);
+      opacity:.65;
     }
 
-    /* shock lines */
-    .shock{
-      position:absolute; inset:-15%;
-      background:
-        radial-gradient(circle at 50% 50%, rgba(255,255,255,.10), transparent 60%),
-        linear-gradient(to right, rgba(200,107,255,0), rgba(200,107,255,.22), rgba(200,107,255,0)),
-        linear-gradient(to bottom, rgba(0,229,255,0), rgba(0,229,255,.14), rgba(0,229,255,0));
+    .cross{
+      position:absolute;
+      left:50%; top:50%;
+      transform: translate(-50%,-50%);
+      width: 54%;
+      height: 54%;
       opacity:0;
-      mix-blend-mode:screen;
-      filter:blur(1px);
-      animation:none;
-    }
-
-    /* cinematic flash */
-    .flash{
-      position:fixed; inset:0;
-      background:white;
-      opacity:0;
-      z-index:60;
+      z-index:4;
       pointer-events:none;
-      transition:opacity .12s ease;
+    }
+    .cross::before,
+    .cross::after{
+      content:"";
+      position:absolute;
+      left:50%; top:50%;
+      transform: translate(-50%,-50%);
+      background: linear-gradient(to right, transparent, rgba(255,255,255,.20), transparent);
+      filter: drop-shadow(0 0 10px rgba(0,229,255,.10));
+    }
+    .cross::before{ width: 120%; height: 1px; }
+    .cross::after{
+      width:1px; height:120%;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,.20), transparent);
     }
 
-    .portal.on .portalField{
-      animation: portalIn .78s cubic-bezier(.16,.88,.2,1) forwards;
-    }
-    .portal.on .portalField::before{
-      animation: aura .78s ease forwards;
-    }
-    .portal.on .swirl{
-      animation: swirlSpin .62s linear infinite;
-    }
-    .portal.on .shock{
-      animation: shock .62s ease forwards;
-    }
-
-    @keyframes portalIn{
-      0%{transform:scale(.58); opacity:0; filter:blur(8px) saturate(1.25)}
-      55%{transform:scale(.98); opacity:1; filter:blur(1.8px) saturate(1.25)}
-      100%{transform:scale(1.28); opacity:1; filter:blur(0px) saturate(1.25)}
-    }
-    @keyframes aura{
-      0%{opacity:0; transform:scale(.95)}
-      55%{opacity:1; transform:scale(1.02)}
-      100%{opacity:.0; transform:scale(1.08)}
-    }
-    @keyframes swirlSpin{
-      to{transform:rotate(360deg)}
-    }
-    @keyframes shock{
-      0%{opacity:0}
-      35%{opacity:.65}
-      100%{opacity:0}
-    }
-
-    /* Fade out main content */
-    .fade{
-      transition: opacity .35s ease, transform .35s ease, filter .35s ease;
-    }
-    .fade.out{
+    .eyeScan{
+      position:absolute;
+      inset:-30% -30%;
+      background: linear-gradient(to bottom, transparent, hsl(var(--c1)/.26), transparent);
       opacity:0;
-      transform:translateY(10px) scale(.99);
-      filter:blur(2px);
+      z-index:4;
+      pointer-events:none;
+      filter: blur(2px);
+      transform: rotate(-12deg) translateY(-30%);
     }
+
+    .slash{
+      position:absolute;
+      left:-15%;
+      top:50%;
+      transform: translateY(-50%);
+      width:130%;
+      height: 12px;
+      background: linear-gradient(to right, transparent, hsl(var(--c1)/.95), transparent);
+      filter: blur(10px);
+      opacity:0;
+      z-index:7;
+      pointer-events:none;
+    }
+
+    .hudText{
+      position:absolute;
+      inset:auto 26px 22px 26px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      z-index:8;
+      pointer-events:none;
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      letter-spacing:.35px;
+    }
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      color: rgba(255,255,255,.86);
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset;
+    }
+
+    .hudStage.run .lidTop{ animation: openTop 900ms cubic-bezier(.12,.92,.22,1) 160ms forwards; }
+    .hudStage.run .lidBottom{ animation: openBottom 900ms cubic-bezier(.12,.92,.22,1) 160ms forwards; }
+    .hudStage.run .iris{ animation: irisIn 760ms ease-out 260ms forwards; }
+    .hudStage.run .hudRing{ animation: ringIn 860ms ease-out 320ms forwards, ringSpin 2.2s linear 900ms infinite; }
+    .hudStage.run .cross{ animation: crossIn 700ms ease-out 360ms forwards; }
+    .hudStage.run .eyeScan{ animation: scanSweep 1.2s ease-in-out 420ms forwards; }
+    .hudStage.run .slash{ animation: slashAnim 900ms ease-out 520ms forwards; }
+    .hudStage.run{ animation: rumble 900ms ease-in-out 520ms; }
+
+    @keyframes openTop{
+      0%{ transform: translateY(0%); }
+      55%{ transform: translateY(-62%); }
+      100%{ transform: translateY(-80%); }
+    }
+    @keyframes openBottom{
+      0%{ transform: translateY(0%); }
+      55%{ transform: translateY(62%); }
+      100%{ transform: translateY(80%); }
+    }
+    @keyframes irisIn{
+      0%{ opacity:0; transform: scale(.92); filter: blur(2px); }
+      60%{ opacity:.92; transform: scale(1.03); filter: blur(0px); }
+      100%{ opacity:1; transform: scale(1); filter: blur(0px); }
+    }
+    @keyframes ringIn{
+      0%{ opacity:0; transform: scale(.96); filter: blur(2px); }
+      100%{ opacity:.95; transform: scale(1); filter: blur(0px); }
+    }
+    @keyframes ringSpin{
+      from{ transform: rotate(0deg); }
+      to{ transform: rotate(360deg); }
+    }
+    @keyframes crossIn{
+      0%{ opacity:0; transform: translate(-50%,-50%) scale(.96); }
+      100%{ opacity:.85; transform: translate(-50%,-50%) scale(1); }
+    }
+    @keyframes scanSweep{
+      0%{ opacity:0; transform: rotate(-12deg) translateY(-40%); }
+      20%{ opacity:.55; }
+      70%{ opacity:.35; }
+      100%{ opacity:0; transform: rotate(-12deg) translateY(50%); }
+    }
+    @keyframes slashAnim{
+      0%{ opacity:0; transform: translateY(-50%) scaleX(.7); }
+      45%{ opacity:.85; transform: translateY(-50%) scaleX(1); }
+      100%{ opacity:0; transform: translateY(-50%) scaleX(1.15); }
+    }
+    @keyframes rumble{
+      0%{ transform: translateZ(0); }
+      20%{ transform: translate3d(1px,-1px,0); }
+      40%{ transform: translate3d(-2px,1px,0); }
+      60%{ transform: translate3d(2px,1px,0); }
+      80%{ transform: translate3d(-1px,-2px,0); }
+      100%{ transform: translateZ(0); }
+    }
+    .hudStage.out{ animation: fadeOut 380ms ease-in forwards; }
+    @keyframes fadeOut{ to{ opacity:0; transform: scale(1.02);} }
   </style>
 </head>
+
 <body>
-  <div class="nebula" aria-hidden="true"></div>
-  <div class="scan" aria-hidden="true"></div>
-  <div class="vignette" aria-hidden="true"></div>
-  <div class="dust" aria-hidden="true"></div>
+  <div class="bg"></div>
+  <canvas id="space"></canvas>
+  <canvas id="dust"></canvas>
+  <div class="vignette"></div>
+  <div class="grid"></div>
+  <div class="noise"></div>
 
-  <div class="flash" id="flash" aria-hidden="true"></div>
+  <div class="portalWrap" aria-hidden="true">
+    <div class="portal"></div>
+  </div>
 
-  <div class="portal" id="portal" aria-hidden="true">
-    <div class="portalField" id="portalField">
-      <div class="shock"></div>
-      <div class="ring"></div>
-      <div class="swirl"></div>
+  <div id="root"></div>
+
+  <!-- ✅ HUD Overlay (Merged) -->
+  <div class="hudOverlay" id="hudOverlay" aria-hidden="true">
+    <div class="hudStage" id="hudStage">
+      <div class="hudScan"></div>
+      <div class="hudNoise"></div>
+      <div class="hudFrame"></div>
+
+      <div class="hudCenter">
+        <span class="dot"></span>
+        <span class="mono">HUD</span>
+        <span>• TARGET ACQUIRED •</span>
+      </div>
+
+      <div class="hudEyes">
+        <div class="eye">
+          <div class="iris"><div class="pupil"></div></div>
+          <div class="hudRing"></div>
+          <div class="cross"></div>
+          <div class="eyeScan"></div>
+          <div class="slash"></div>
+          <div class="lidTop"></div>
+          <div class="lidBottom"></div>
+        </div>
+
+        <div class="eye">
+          <div class="iris"><div class="pupil"></div></div>
+          <div class="hudRing"></div>
+          <div class="cross"></div>
+          <div class="eyeScan"></div>
+          <div class="slash"></div>
+          <div class="lidTop"></div>
+          <div class="lidBottom"></div>
+        </div>
+      </div>
+
+      <div class="hudText">
+        <div class="tag"><span class="dot"></span><span>RISE SYSTEM™</span></div>
+        <div class="tag"><span class="mono">SYNC</span>&nbsp; <span class="mono" id="hudPct">0%</span></div>
+        <div class="tag"><span class="mono">MODE</span>&nbsp; <span>CYBER</span></div>
+      </div>
     </div>
   </div>
 
-  <div class="wrap">
-    <main class="panel fade" id="panel">
-      <div class="badge">
-        <div class="dot"></div>
-        <div class="brand">RISE SYSTEM™</div>
-        <div class="sub">Initialization</div>
-      </div>
-
-      <h1 class="system glitch" data-text="SYSTEM">SYSTEM</h1>
-
-      <section class="mission">
-        <div class="loadText" aria-live="polite">
-          <div class="shine" aria-hidden="true"></div>
-
-          <div class="outline" id="outlineText">BECOME A LEGEND</div>
-
-          <div class="fillLayer" aria-hidden="true">
-            <div class="mask" id="mask">
-              <span id="fillText">BECOME A LEGEND</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="mini"><span id="pct">0%</span></div>
-      </section>
-
-      <div class="enterWrap">
-        <button class="btn" id="enterBtn" disabled>ENTER SYSTEM</button>
-        <span class="ready" id="ready">
-          <span class="pulse"></span>
-          <span class="kbd">PRESS ENTER</span>
-        </span>
-      </div>
-    </main>
-  </div>
+  <!-- React (CDN) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
   <script>
-    // ✅ غيّر هذا فقط إذا صفحة موقعك ليست app.html
-    const TARGET_PAGE = "app.html";
+    const { useEffect, useMemo, useRef, useState } = React;
+    const h = React.createElement;
 
-    const portal = document.getElementById("portal");
-    const panel  = document.getElementById("panel");
-    const flash  = document.getElementById("flash");
+    const TARGET_APP = "app.html"; // ✅ غيّرها إذا ملفك الرئيسي اسمه مختلف
 
-    const enterBtn = document.getElementById("enterBtn");
-    const readyEl  = document.getElementById("ready");
+    /* ========= AUTONOMOUS SPACE (2 CANVASES) ========= */
+    function useSpace(){
+      const rafRef = useRef(null);
+      const starsRef = useRef([]);
+      const dustRef = useRef([]);
+      const lastRef = useRef(performance.now());
 
-    const pctEl  = document.getElementById("pct");
-    const maskEl = document.getElementById("mask");
+      useEffect(()=>{
+        const c1 = document.getElementById("space");
+        const c2 = document.getElementById("dust");
+        const ctx1 = c1.getContext("2d", { alpha:true });
+        const ctx2 = c2.getContext("2d", { alpha:true });
 
-    // Optional: change phrase here if you want
-    const PHRASE = "BECOME A LEGEND";
+        function resize(){
+          const dpr = Math.min(2, window.devicePixelRatio || 1);
+          for (const c of [c1,c2]){
+            c.width = Math.floor(window.innerWidth * dpr);
+            c.height = Math.floor(window.innerHeight * dpr);
+            c.style.width = window.innerWidth + "px";
+            c.style.height = window.innerHeight + "px";
+          }
+          ctx1.setTransform(dpr,0,0,dpr,0,0);
+          ctx2.setTransform(dpr,0,0,dpr,0,0);
+        }
+        resize();
+        window.addEventListener("resize", resize);
 
-    document.getElementById("outlineText").textContent = PHRASE;
-    document.getElementById("fillText").textContent = PHRASE;
+        const W = ()=>window.innerWidth;
+        const H = ()=>window.innerHeight;
 
-    // ===== Cinematic, non-linear boot that feels "alive" (no logs) =====
-    let progress = 0;
-    let ready = false;
-    let going = false;
+        function seed(){
+          const n = Math.floor(Math.max(160, (W()*H())/11000));
+          const s = [];
+          for(let i=0;i<n;i++){
+            s.push({
+              x: Math.random()*W(),
+              y: Math.random()*H(),
+              z: Math.random()*0.92 + 0.08,
+              r: Math.random()*1.25 + 0.25,
+              tw: Math.random()*Math.PI*2,
+              sp: (Math.random()*0.9 + 0.35)
+            });
+          }
+          starsRef.current = s;
 
-    function setProgress(p){
-      progress = Math.max(progress, Math.min(100, p));
-      const shown = Math.floor(progress);
-      pctEl.textContent = shown + "%";
-      maskEl.style.width = shown + "%";
+          const m = Math.floor(Math.max(60, (W()*H())/30000));
+          const d = [];
+          for(let i=0;i<m;i++){
+            d.push({
+              x: Math.random()*W(),
+              y: Math.random()*H(),
+              r: Math.random()*2.2 + 0.8,
+              a: Math.random()*0.08 + 0.03,
+              vx: (Math.random()*0.4 + 0.15),
+              vy: (Math.random()*0.16 - 0.08)
+            });
+          }
+          dustRef.current = d;
+        }
+        seed();
+
+        function tick(now){
+          const dt = Math.min(0.04, (now - lastRef.current)/1000);
+          lastRef.current = now;
+
+          // layer 1: stars
+          ctx1.clearRect(0,0,W(),H());
+
+          // soft fog
+          const fog = ctx1.createRadialGradient(W()*0.5, H()*0.35, 20, W()*0.5, H()*0.35, Math.max(W(),H())*0.8);
+          fog.addColorStop(0, "rgba(0,229,255,0.045)");
+          fog.addColorStop(1, "rgba(168,85,247,0.00)");
+          ctx1.fillStyle = fog;
+          ctx1.fillRect(0,0,W(),H());
+
+          for(const s of starsRef.current){
+            s.x += (0.35 + s.z*0.7) * s.sp * dt * 30;
+            s.y += Math.sin((now/1000) + s.tw) * dt * (0.9 + s.z*1.4);
+
+            if(s.x > W()+40) s.x = -40;
+            if(s.y > H()+40) s.y = -40;
+            if(s.y < -40) s.y = H()+40;
+
+            const twinkle = 0.6 + 0.4*Math.sin((now/1000)*2.2 + s.tw);
+            const a = (0.10 + s.z*0.42) * twinkle;
+
+            ctx1.beginPath();
+            ctx1.arc(s.x, s.y, s.r*(0.6+s.z), 0, Math.PI*2);
+            ctx1.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
+            ctx1.fill();
+
+            if(Math.random() < 0.0021){
+              ctx1.beginPath();
+              ctx1.moveTo(s.x, s.y);
+              ctx1.lineTo(s.x - 20*(0.6+s.z), s.y + 3);
+              ctx1.strokeStyle = `rgba(0,229,255,${(0.14+s.z*0.24).toFixed(3)})`;
+              ctx1.lineWidth = 1;
+              ctx1.stroke();
+            }
+          }
+
+          // layer 2: floating dust blobs
+          ctx2.clearRect(0,0,W(),H());
+          for(const p of dustRef.current){
+            p.x += p.vx * dt * 40;
+            p.y += p.vy * dt * 40;
+            if(p.x > W()+80) p.x = -80;
+            if(p.y > H()+80) p.y = -80;
+            if(p.y < -80) p.y = H()+80;
+
+            const g = ctx2.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r*28);
+            g.addColorStop(0, `rgba(0,229,255,${(p.a*0.55).toFixed(3)})`);
+            g.addColorStop(1, "rgba(0,0,0,0)");
+            ctx2.fillStyle = g;
+            ctx2.fillRect(p.x - p.r*30, p.y - p.r*30, p.r*60, p.r*60);
+          }
+
+          rafRef.current = requestAnimationFrame(tick);
+        }
+        rafRef.current = requestAnimationFrame(tick);
+
+        return ()=>{
+          cancelAnimationFrame(rafRef.current);
+          window.removeEventListener("resize", resize);
+        };
+      }, []);
     }
 
-    // A “director-like” curve: fast start -> mid waves -> suspense near end -> snap to 100
-    function nextStep(){
-      if (ready) return;
+    function Intro(){
+      useSpace();
 
-      const t = progress / 100;
+      const words = useMemo(()=>[
+        "DISCIPLINED", "UNSTOPPABLE", "FOCUSED", "DANGEROUS", "LEGENDARY"
+      ], []);
 
-      // base increment by phase
-      let inc;
-      if (t < 0.18) inc = 4 + Math.random() * 6;              // fast
-      else if (t < 0.55) inc = 1.8 + Math.random() * 3.6;     // steady
-      else if (t < 0.82) inc = 0.8 + Math.random() * 2.2;     // slower
-      else if (t < 0.94) inc = (Math.random() < 0.65) ? 0.22 : (0.6 + Math.random() * 1.1); // suspense
-      else inc = 0.45 + Math.random() * 1.0;                  // final
+      const [i, setI] = useState(0);
+      const [phase, setPhase] = useState(0);
+      const [leaving, setLeaving] = useState(false);
 
-      // occasional cinematic jump
-      if (Math.random() < 0.11 && progress < 92) inc += 2 + Math.random() * 6;
+      useEffect(()=>{
+        const t1 = setTimeout(()=> setPhase(1), 1500);
+        const t2 = setTimeout(()=>{
+          setPhase(0);
+          setI(v => (v+1) % words.length);
+        }, 1880);
+        return ()=>{ clearTimeout(t1); clearTimeout(t2); };
+      }, [i, words.length]);
 
-      // clamp close to 99 sometimes (creates tension)
-      let target = Math.min(100, progress + inc);
-      if (target > 99 && progress < 99 && Math.random() < 0.55) target = 99;
+      useEffect(()=>{
+        const onKey = (e)=>{
+          if(e.key === "Enter"){
+            const btn = document.getElementById("enterBtn");
+            if(btn) btn.click();
+          }
+        };
+        window.addEventListener("keydown", onKey);
+        return ()=> window.removeEventListener("keydown", onKey);
+      }, []);
 
-      setProgress(target);
+      function enter(){
+        if(leaving) return;
+        setLeaving(true);
 
-      if (progress >= 99 && progress < 100){
-        // hold a dramatic pause, then hit 100
-        setTimeout(() => {
-          setProgress(100);
-          onReady();
-        }, 520 + Math.random() * 520);
-        return;
+        // ✅ 1) Play HUD eyes
+        window.__playHudThenGo__(TARGET_APP);
       }
 
-      // timing (varies by phase)
-      const delay =
-        t < 0.18 ? 70 + Math.random() * 130 :
-        t < 0.55 ? 90 + Math.random() * 170 :
-        t < 0.82 ? 120 + Math.random() * 210 :
-                   160 + Math.random() * 260;
+      const chipStyle = {
+        transform: phase ? "translateY(7px) scale(0.985)" : "translateY(0px) scale(1)",
+        opacity: phase ? 0.40 : 1,
+        transition: "transform 260ms ease, opacity 240ms ease",
+      };
 
-      setTimeout(nextStep, delay);
+      return h("div", { className:"wrap" },
+        h("div", { className:"panel", id:"panel" },
+          h("div", { className:"scanline" }),
+          h("div", { className:"hudCorners" }),
+          h("div", { className:"inner" },
+
+            h("div", { className:"badge" },
+              h("span", { className:"spark" }),
+              h("span", { style:{fontFamily:"Oxanium, Inter, sans-serif", letterSpacing:"1px"} }, "INIT • RISE PROTOCOL"),
+              h("span", { style:{opacity:.7} }, "• ONLINE")
+            ),
+
+            h("div", { className:"hero" },
+              h("h1", { className:"headline" },
+                h("span", { className:"sys glitch", "data-text":"SYSTEM" }, "SYSTEM"),
+                h("span", null, " "),
+                "BECOME A ",
+                h("span", { className:"chip", style: chipStyle }, h("span", null, words[i])),
+                " ",
+                h("span", { className:"heroWord" }, "HERO")
+              ),
+
+              h("p", { className:"subline" },
+                "This is not a to-do list. This is a SYSTEM. ",
+                "Enter, then evolve… every single day."
+              ),
+
+              h("div", { className:"actions" },
+                h("button", { id:"enterBtn", className:"btn btnPrimary", onClick: enter }, "ENTER THE SYSTEM"),
+                h("button", { className:"btn", onClick: ()=> location.reload() }, "RECALIBRATE"),
+                h("div", { className:"hint" }, "Press ", h("span", {className:"kbd"}, "Enter"), " to enter")
+              ),
+
+              h("div", { className:"echo" },
+                h("div", null, "• Cinematic • Reactive • One-File"),
+                h("div", null, "• No install • Works directly")
+              )
+            )
+          )
+        )
+      );
     }
 
-    function onReady(){
-      ready = true;
-      enterBtn.disabled = false;
-      readyEl.classList.add("on");
-    }
+    ReactDOM.createRoot(document.getElementById("root")).render(h(Intro));
+  </script>
 
-    // ===== “SYSTEM” cinematic sound + gate sound (WebAudio) =====
-    // Note: audio needs user interaction to fully play on many browsers.
-    function playSystemGateSound(){
-      try{
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioCtx();
-        const now = ctx.currentTime;
+  <script>
+    /* ============================================================
+       ✅ HUD playback controller (called from React enter())
+       ============================================================ */
+    (function(){
+      const overlay = document.getElementById("hudOverlay");
+      const stage   = document.getElementById("hudStage");
+      const pctEl   = document.getElementById("hudPct");
 
-        // Master
-        const master = ctx.createGain();
-        master.gain.setValueAtTime(0.0001, now);
-        master.gain.exponentialRampToValueAtTime(0.9, now + 0.03);
-        master.gain.exponentialRampToValueAtTime(0.0001, now + 1.05);
-        master.connect(ctx.destination);
+      let armed = true;
 
-        // Sub rumble (SYSTEM power)
-        const sub = ctx.createOscillator();
-        sub.type = "sine";
-        sub.frequency.setValueAtTime(48, now);
-        sub.frequency.exponentialRampToValueAtTime(36, now + 0.9);
+      function setPct(v){
+        if(!pctEl) return;
+        pctEl.textContent = v + "%";
+      }
 
-        const subG = ctx.createGain();
-        subG.gain.setValueAtTime(0.0001, now);
-        subG.gain.exponentialRampToValueAtTime(0.22, now + 0.04);
-        subG.gain.exponentialRampToValueAtTime(0.0001, now + 1.02);
+      window.__playHudThenGo__ = function(targetHref){
+        if(!armed) return;
+        armed = false;
 
-        // Metallic "SYSTEM" hit (FM-ish feel via detuned oscillators)
-        const oA = ctx.createOscillator();
-        oA.type = "triangle";
-        oA.frequency.setValueAtTime(740, now);
-        oA.frequency.exponentialRampToValueAtTime(420, now + 0.45);
+        // panel fade out in the background while HUD plays
+        const panel = document.getElementById("panel");
+        if(panel) panel.classList.add("out");
 
-        const oB = ctx.createOscillator();
-        oB.type = "sawtooth";
-        oB.frequency.setValueAtTime(1110, now);
-        oB.frequency.exponentialRampToValueAtTime(520, now + 0.55);
-        oB.detune.setValueAtTime(-7, now);
+        // reset HUD
+        stage.classList.remove("run","out");
+        overlay.classList.add("show");
+        overlay.setAttribute("aria-hidden","false");
 
-        const hiG = ctx.createGain();
-        hiG.gain.setValueAtTime(0.0001, now);
-        hiG.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
-        hiG.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+        // sync number animation
+        let p = 0;
+        setPct(0);
+        const sync = setInterval(()=>{
+          p = Math.min(100, p + (p < 70 ? 7 : 4));
+          setPct(p);
+          if(p >= 100) clearInterval(sync);
+        }, 60);
 
-        // Whoosh noise (gate opening)
-        const bufferSize = Math.floor(ctx.sampleRate * 1.05);
-        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = noiseBuffer.getChannelData(0);
-        for (let i=0; i<bufferSize; i++){
-          const fade = 1 - (i / bufferSize);
-          data[i] = (Math.random()*2 - 1) * (fade * fade);
-        }
-        const noise = ctx.createBufferSource();
-        noise.buffer = noiseBuffer;
+        requestAnimationFrame(()=> stage.classList.add("run"));
 
-        const bp = ctx.createBiquadFilter();
-        bp.type = "bandpass";
-        bp.frequency.setValueAtTime(540, now);
-        bp.frequency.exponentialRampToValueAtTime(1200, now + 0.55);
-        bp.Q.setValueAtTime(0.85, now);
+        const OUT_AT = 1850;
+        const TOTAL  = 2250;
 
-        const nG = ctx.createGain();
-        nG.gain.setValueAtTime(0.0001, now);
-        nG.gain.exponentialRampToValueAtTime(0.33, now + 0.03);
-        nG.gain.exponentialRampToValueAtTime(0.0001, now + 1.02);
-
-        // Connect
-        sub.connect(subG); subG.connect(master);
-        oA.connect(hiG); oB.connect(hiG); hiG.connect(master);
-        noise.connect(bp); bp.connect(nG); nG.connect(master);
-
-        // Start/stop
-        sub.start(now); oA.start(now); oB.start(now); noise.start(now);
-        sub.stop(now + 1.08); oA.stop(now + 1.08); oB.stop(now + 1.08); noise.stop(now + 1.08);
-
-      } catch(e){ /* ignore */ }
-    }
-
-    // ===== Enter / Transition =====
-    function go(){
-      if (!ready || going) return;
-      going = true;
-
-      // audio (on user action)
-      playSystemGateSound();
-
-      // visuals
-      portal.classList.add("on");
-      panel.classList.add("out");
-
-      // cinematic flash
-      flash.style.opacity = "0.35";
-      setTimeout(()=> flash.style.opacity = "0", 120);
-
-      // move
-      setTimeout(() => {
-        window.location.href = TARGET_PAGE;
-      }, 820);
-    }
-
-    enterBtn.addEventListener("click", go);
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") go();
-    });
-
-    // Start boot
-    setProgress(0);
-    setTimeout(nextStep, 260);
+        setTimeout(()=> stage.classList.add("out"), OUT_AT);
+        setTimeout(()=>{
+          window.location.href = targetHref || "app.html";
+        }, TOTAL);
+      };
+    })();
   </script>
 </body>
 </html>
