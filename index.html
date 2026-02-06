@@ -18,11 +18,9 @@
       --chart-3: 155 80% 48%;
       --chart-4: 35 95% 58%;
       --chart-5: 0 84% 60%;
-
       --font-sans: "IBM Plex Sans Arabic", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       --font-display: "Oxanium", "IBM Plex Sans Arabic", system-ui, sans-serif;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
@@ -33,7 +31,6 @@
       overflow-x:hidden;
     }
 
-    /* ✅ خلفية فضاء متحركة تلقائيًا (بدون ماوس/بدون JS) */
     .bg-anim{
       position:fixed;
       inset:-18%;
@@ -49,8 +46,6 @@
       transform: translateZ(0);
       will-change: transform, filter, background-position;
     }
-
-    /* “سديم/نِيبولا” */
     .bg-anim::before{
       content:"";
       position:absolute; inset:0;
@@ -67,8 +62,6 @@
       mix-blend-mode: screen;
       pointer-events:none;
     }
-
-    /* “نجوم” خفيفة جدًا (بدون كواكب) */
     .bg-anim::after{
       content:"";
       position:absolute; inset:0;
@@ -90,20 +83,14 @@
       50%  { background-position: 60% 40%; transform: scale(1.03); filter: hue-rotate(10deg); }
       100% { background-position: 45% 55%; transform: scale(1); filter: hue-rotate(0deg); }
     }
-    @keyframes nebulaSpin{
-      from{ transform: rotate(0deg); }
-      to{ transform: rotate(360deg); }
-    }
+    @keyframes nebulaSpin{ from{ transform: rotate(0deg); } to{ transform: rotate(360deg); } }
     @keyframes starsFloat{
       0%   { transform: translate(0px,0px); opacity:.50; }
       50%  { transform: translate(14px,-10px); opacity:.60; }
       100% { transform: translate(0px,0px); opacity:.50; }
     }
 
-    .mono{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    }
-
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
     .wrap{max-width:1100px; margin:0 auto; padding:28px 16px 40px;}
 
     .header{position:relative}
@@ -151,7 +138,6 @@
     .stat-k{font-size:11px; letter-spacing:2px; color: rgba(255,255,255,.72)}
     .stat-v{margin-top:6px; font-family:var(--font-display); font-size:22px}
     .stat-s{margin-top:4px; font-size:11px; color: rgba(255,255,255,.66)}
-
     .stat-hp{border-color:hsl(var(--chart-3) / .35); background:hsl(var(--chart-3) / .12)}
     .stat-level{border-color:hsl(var(--chart-1) / .35); background:hsl(var(--chart-1) / .12)}
     .stat-rank{border-color:hsl(var(--chart-2) / .35); background:hsl(var(--chart-2) / .12)}
@@ -261,6 +247,15 @@
       font-size:13px; line-height:1.65;
     }
 
+    .chart-wrap{
+      margin-top:10px; width:100%;
+      border-radius:18px; border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      overflow:hidden;
+      padding:10px;
+    }
+    .chart-wrap canvas{width:100%; height:auto; display:block}
+
     .footer{
       margin-top:18px; padding-top:14px;
       border-top:1px solid rgba(255,255,255,.14);
@@ -309,15 +304,7 @@
       { key: "S", days: 365, label: "S Elite" },
     ];
 
-    // ✅ عقوبة الالتزام حسب الرانك الحالي (تأثيرها فقط على commitDays)
-    const RANK_PENALTY = {
-      E: 0,
-      D: 1,
-      C: 3,
-      B: 7,
-      A: 14,
-      S: 30
-    };
+    const RANK_PENALTY = { E:0, D:1, C:3, B:7, A:14, S:30 };
 
     const QUOTES = [
       "أنت لا تبحث عن الحماس… أنت تبني الانضباط.",
@@ -390,7 +377,7 @@
       return `${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}:${String(ss).padStart(2,"0")}`;
     }
 
-    const STORAGE_KEY = "RISE_SYSTEM_INDEX_FULL_V5";
+    const STORAGE_KEY = "RISE_SYSTEM_INDEX_FULL_V7";
     function loadState(){
       try{
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -400,7 +387,6 @@
     }
     function saveState(s){ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
 
-    /* ✅ الإنجاز العادل: يعتمد على importance كوزن ثابت */
     function computeToday(tasks){
       const totals = {
         scoreDone: 0,
@@ -445,7 +431,6 @@
       ctx.closePath();
     }
 
-    /* ✅ Radar: أنيميشن ناعم عند تغيير القيم */
     function RadarCanvas(props){
       const ref = useRef(null);
       const prevRef = useRef({PH:0, IQ:0, SP:0});
@@ -555,6 +540,209 @@
       );
     }
 
+    function CommitChart(props){
+      const ref = useRef(null);
+      const prevYRef = useRef(null);
+      const animRef = useRef(null);
+
+      function draw(points, t=1){
+        const canvas = ref.current;
+        if(!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width, hh = canvas.height;
+        ctx.clearRect(0,0,w,hh);
+
+        const pad = 18;
+        const innerW = w - pad*2;
+        const innerH = hh - pad*2;
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+        ctx.lineWidth = 1;
+        for(let i=0;i<=4;i++){
+          const y = pad + (innerH * (i/4));
+          ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w-pad, y); ctx.stroke();
+        }
+        ctx.restore();
+
+        if(!points || points.length < 2){
+          ctx.fillStyle = "rgba(255,255,255,0.70)";
+          ctx.font = "13px IBM Plex Sans Arabic, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("سيظهر المنحنى بعد أول يوم حفظ تلقائي.", w/2, hh/2);
+          return;
+        }
+
+        const maxY = Math.max(1, ...points.map(p=>p.y));
+        const minY = Math.min(...points.map(p=>p.y));
+        const range = Math.max(1, maxY - minY);
+
+        const xs = points.map((p, i)=>{
+          const x = pad + (innerW * (i/(points.length-1)));
+          const yNorm = (p.y - minY) / range;
+          const y = pad + innerH - (yNorm * innerH);
+          return {x,y, yVal:p.y};
+        });
+
+        const prev = prevYRef.current;
+        const ys = xs.map((p,i)=>{
+          const py = prev && prev[i] != null ? prev[i] : p.y;
+          return { x:p.x, y: py + (p.y - py)*t, yVal:p.yVal };
+        });
+
+        ctx.beginPath();
+        ctx.moveTo(ys[0].x, ys[0].y);
+        for(let i=1;i<ys.length;i++) ctx.lineTo(ys[i].x, ys[i].y);
+        ctx.lineTo(ys[ys.length-1].x, hh-pad);
+        ctx.lineTo(ys[0].x, hh-pad);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(0,229,255,0.10)";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(ys[0].x, ys[0].y);
+        for(let i=1;i<ys.length;i++) ctx.lineTo(ys[i].x, ys[i].y);
+        ctx.strokeStyle = "rgba(0,229,255,0.92)";
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(0,229,255,0.95)";
+        for(const p of ys){
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3.6, 0, Math.PI*2);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = "rgba(255,255,255,0.70)";
+        ctx.font = "12px IBM Plex Sans Arabic, sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(`الآن: ${points[points.length-1].y} يوم`, w-pad, pad+12);
+
+        ctx.textAlign = "left";
+        ctx.fillText(`البداية: ${points[0].y} يوم`, pad, pad+12);
+      }
+
+      useEffect(()=>{
+        const points = props.points || [];
+        if(animRef.current) cancelAnimationFrame(animRef.current);
+
+        const start = performance.now();
+        const dur = 420;
+        function ease(t){ return 1 - Math.pow(1-t, 3); }
+
+        function step(now){
+          const tt = Math.min(1, (now - start) / dur);
+          draw(points, ease(tt));
+          if(tt < 1) animRef.current = requestAnimationFrame(step);
+        }
+        animRef.current = requestAnimationFrame(step);
+
+        return ()=>{ if(animRef.current) cancelAnimationFrame(animRef.current); };
+      }, [props.points]);
+
+      return h("div", {className:"chart-wrap"},
+        h("canvas", {ref, width:720, height:280})
+      );
+    }
+
+    // ✅ منحنى Net EXP
+    function ExpChart(props){
+      const ref = useRef(null);
+      const animRef = useRef(null);
+
+      function draw(points, t=1){
+        const canvas = ref.current;
+        if(!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width, hh = canvas.height;
+        ctx.clearRect(0,0,w,hh);
+
+        const pad = 18;
+        const innerW = w - pad*2;
+        const innerH = hh - pad*2;
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+        ctx.lineWidth = 1;
+        for(let i=0;i<=4;i++){
+          const y = pad + (innerH * (i/4));
+          ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w-pad, y); ctx.stroke();
+        }
+        ctx.restore();
+
+        if(!points || points.length < 2){
+          ctx.fillStyle = "rgba(255,255,255,0.70)";
+          ctx.font = "13px IBM Plex Sans Arabic, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("سيظهر منحنى EXP بعد أول يوم حفظ تلقائي.", w/2, hh/2);
+          return;
+        }
+
+        const maxY = Math.max(1, ...points.map(p=>p.y));
+        const minY = Math.min(...points.map(p=>p.y));
+        const range = Math.max(1, maxY - minY);
+
+        const pts = points.map((p,i)=>{
+          const x = pad + (innerW * (i/(points.length-1)));
+          const yNorm = (p.y - minY) / range;
+          const y = pad + innerH - (yNorm * innerH);
+          return {x,y, yVal:p.y};
+        });
+
+        const shown = pts.map(p=>({x:p.x, y: pad + innerH - ((pad + innerH - p.y) * t), yVal:p.yVal}));
+
+        ctx.beginPath();
+        ctx.moveTo(shown[0].x, shown[0].y);
+        for(let i=1;i<shown.length;i++) ctx.lineTo(shown[i].x, shown[i].y);
+        ctx.lineTo(shown[shown.length-1].x, hh-pad);
+        ctx.lineTo(shown[0].x, hh-pad);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(168,85,247,0.10)";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(shown[0].x, shown[0].y);
+        for(let i=1;i<shown.length;i++) ctx.lineTo(shown[i].x, shown[i].y);
+        ctx.strokeStyle = "rgba(168,85,247,0.92)";
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(168,85,247,0.95)";
+        for(const p of shown){
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3.6, 0, Math.PI*2);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = "rgba(255,255,255,0.70)";
+        ctx.font = "12px IBM Plex Sans Arabic, sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(`Net EXP الآن: ${Math.round(points[points.length-1].y)}`, w-pad, pad+12);
+      }
+
+      useEffect(()=>{
+        const points = props.points || [];
+        if(animRef.current) cancelAnimationFrame(animRef.current);
+
+        const start = performance.now();
+        const dur = 420;
+        function ease(t){ return 1 - Math.pow(1-t, 3); }
+
+        function step(now){
+          const tt = Math.min(1, (now - start) / dur);
+          draw(points, ease(tt));
+          if(tt < 1) animRef.current = requestAnimationFrame(step);
+        }
+        animRef.current = requestAnimationFrame(step);
+
+        return ()=>{ if(animRef.current) cancelAnimationFrame(animRef.current); };
+      }, [props.points]);
+
+      return h("div", {className:"chart-wrap"},
+        h("canvas", {ref, width:720, height:280})
+      );
+    }
+
     function App(){
       const loaded = useMemo(()=>loadState(), []);
       const [state, setState] = useState(()=>{
@@ -565,14 +753,15 @@
             { id:"t2", title:"Push-ups", target:300, importance:4, type:"PH", done:0 },
             { id:"t3", title:"قراءة", target:30, importance:3, type:"IQ", done:0 },
           ],
-          totalExp: 0,
-          hp: 72,
-          commitDays: 3,
+          totalExp: 0,            // ✅ Net EXP (تزيد/تنقص)
+          hp: 100,
+          commitDays: 0,
           lastCommitDay: null,
           lockedUntil: null,
           lifetimeByType: { PH:0, IQ:0, SP:0 },
           lifetimePotentialByType: { PH:0, IQ:0, SP:0 },
-          daysClosed: 0,
+          commitHistory: [],       // {d, v}
+          expHistory: [],          // {d, v}
         };
         if(loaded && typeof loaded === "object") return Object.assign({}, base, loaded);
         return base;
@@ -583,7 +772,7 @@
 
       useEffect(()=>{
         const t = setInterval(()=> setCountdownMs(msToMidnight()), 1000);
-        return ()=>clearInterval(t);
+        return ()=>clearTimeout(t);
       }, []);
 
       const computed = useMemo(()=>computeToday(state.tasks), [state.tasks]);
@@ -604,13 +793,6 @@
         const mm = Math.floor((ms%(1000*60*60))/(1000*60));
         return {hh, mm};
       }, [state.lockedUntil, countdownMs]);
-
-      // Catchup if day changed while closed
-      useEffect(()=>{
-        const t = todayKeyLocal();
-        if(state.day !== t) finalizeDay();
-        // eslint-disable-next-line
-      }, []);
 
       // Auto finalize at midnight
       useEffect(()=>{
@@ -645,31 +827,48 @@
         }));
       }
 
+      function pushHistory(history, dateKey, value){
+        const arr = Array.isArray(history) ? history.slice() : [];
+        if(arr.length && arr[arr.length-1].d === dateKey){
+          arr[arr.length-1] = { d: dateKey, v: value };
+          return arr;
+        }
+        arr.push({ d: dateKey, v: value });
+        return arr;
+      }
+
+      // ✅ عقوبة EXP تزيد مع الـ Level
+      function expPenaltyByLevel(currLevel){
+        // قاعدة: 80 EXP كبداية، وكل 10 ليفل تزيد ~ 25%
+        const base = 80;
+        const scale = 1 + (Math.max(0, currLevel - 1) / 10) * 0.25;
+        return Math.round(base * scale);
+      }
+
       function finalizeDay(){
         setState(prev=>{
           const totals = computeToday(prev.tasks);
           const completion = totals.completion;
-          const expGained = Math.round(totals.exp);
 
+          const dayJustClosed = prev.day;
+          const newDay = todayKeyLocal();
+
+          const expGained = Math.round(totals.exp);
           const qualifies = completion >= 0.7;
           const failHard = completion < 0.5;
 
-          const totalExp = prev.totalExp + expGained;
-
+          // HP logic (مثل ما هو)
           const delta = qualifies ? 6 : (failHard ? -12 : -4);
           const hp = clamp(prev.hp + delta, 0, 100);
           const lockedUntil = hp === 0 ? (Date.now() + 24*60*60*1000) : null;
 
-          // ✅ هنا العقوبة الجديدة للـ RANK (تأثيرها فقط على commitDays)
+          // CommitDays logic (مثل ما هو)
           const currentRank = rankFromStreak(prev.commitDays).key;
-          const penalty = qualifies ? 0 : (RANK_PENALTY[currentRank] ?? 0);
+          const penaltyDays = qualifies ? 0 : (RANK_PENALTY[currentRank] ?? 0);
+          const commitDays = qualifies ? (prev.commitDays + 1) : Math.max(0, prev.commitDays - penaltyDays);
+          const lastCommitDay = qualifies ? dayJustClosed : prev.lastCommitDay;
 
-          const commitDays = qualifies
-            ? (prev.commitDays + 1)
-            : Math.max(0, prev.commitDays - penalty);
-
-          const lastCommitDay = qualifies ? prev.day : prev.lastCommitDay;
-
+          // Lifetime radar accumulators (مثل ما هو)
           const lifetimeByType = {
             PH: prev.lifetimeByType.PH + totals.byType.PH,
             IQ: prev.lifetimeByType.IQ + totals.byType.IQ,
@@ -681,46 +880,55 @@
             SP: prev.lifetimePotentialByType.SP + totals.byTypePotential.SP
           };
 
-          const day = todayKeyLocal();
+          // ✅ Net EXP: إذا نجح اليوم تُضاف، إذا فشل تُنقص (وتزيد العقوبة مع الـ level الحالي)
+          const currLevel = expToLevel(prev.totalExp).level;
+          const expPenalty = expPenaltyByLevel(currLevel);
+          const totalExp = qualifies
+            ? (prev.totalExp + expGained)
+            : Math.max(0, prev.totalExp - expPenalty);
+
           const tasks = prev.tasks.map(t => Object.assign({}, t, {done:0}));
+
+          const commitHistory = pushHistory(prev.commitHistory, dayJustClosed, commitDays);
+          const expHistory = pushHistory(prev.expHistory, dayJustClosed, totalExp);
 
           return Object.assign({}, prev, {
             totalExp, hp, lockedUntil,
             commitDays, lastCommitDay,
             lifetimeByType, lifetimePotentialByType,
-            daysClosed: (prev.daysClosed||0) + 1,
-            day, tasks
+            day: newDay, tasks,
+            commitHistory, expHistory
           });
         });
       }
 
-      /* ✅ Live Radar: الكلّي + اليوم الحالي فورًا */
       const radarLive = useMemo(()=>{
         const g = state.lifetimeByType;
         const p = state.lifetimePotentialByType;
-
-        const liveGain = {
-          PH: g.PH + computed.byType.PH,
-          IQ: g.IQ + computed.byType.IQ,
-          SP: g.SP + computed.byType.SP
-        };
-        const livePot = {
-          PH: p.PH + computed.byTypePotential.PH,
-          IQ: p.IQ + computed.byTypePotential.IQ,
-          SP: p.SP + computed.byTypePotential.SP
-        };
-
+        const liveGain = { PH: g.PH + computed.byType.PH, IQ: g.IQ + computed.byType.IQ, SP: g.SP + computed.byType.SP };
+        const livePot  = { PH: p.PH + computed.byTypePotential.PH, IQ: p.IQ + computed.byTypePotential.IQ, SP: p.SP + computed.byTypePotential.SP };
         const ph = livePot.PH>0 ? liveGain.PH/livePot.PH : 0;
         const iq = livePot.IQ>0 ? liveGain.IQ/livePot.IQ : 0;
         const sp = livePot.SP>0 ? liveGain.SP/livePot.SP : 0;
-
         return { PH: Math.round(ph*100), IQ: Math.round(iq*100), SP: Math.round(sp*100) };
       }, [state.lifetimeByType, state.lifetimePotentialByType, computed.byType, computed.byTypePotential]);
+
+      const commitPoints = useMemo(()=>{
+        const hist = Array.isArray(state.commitHistory) ? state.commitHistory : [];
+        return hist.map((x,i)=>({ x:i, y:Number(x.v||0), d:x.d }));
+      }, [state.commitHistory]);
+
+      const expPoints = useMemo(()=>{
+        const hist = Array.isArray(state.expHistory) ? state.expHistory : [];
+        return hist.map((x,i)=>({ x:i, y:Number(x.v||0), d:x.d }));
+      }, [state.expHistory]);
 
       const [newTitle, setNewTitle] = useState("");
       const [newTarget, setNewTarget] = useState(10);
       const [newImportance, setNewImportance] = useState(3);
       const [newType, setNewType] = useState("PH");
+
+      const expPenaltyPreview = useMemo(()=>expPenaltyByLevel(level.level), [level.level]);
 
       return h("div", {className:"wrap"},
         h("header", {className:"header"},
@@ -733,7 +941,7 @@
                 h("span", {className:"brand-sub"}, "Personal Evolution")
               ),
               h("h1", {className:"title"}, "طوّر شخصيتك… مثل الأنمي"),
-              h("p", {className:"subtitle"}, "الخلفية الآن فضاء متحرك تلقائيًا، والرادار ينتقل بسلاسة مع تغيّر الأرقام."),
+              h("p", {className:"subtitle"}, "أضفنا: نقل منحنيات الالتزام وEXP إلى العمود العريض + Net EXP ينقص إذا اليوم أقل من 70% بعقوبة تزيد مع الـ Level."),
               h("div", {className:"chips"},
                 h("div", {className:"chip"}, h("span", null, "اليوم:"), h("span", {className:"chip-mono"}, state.day)),
                 state.lastCommitDay ? h("div", {className:"chip"}, h("span", null, "آخر يوم محسوب:"), h("span", {className:"chip-mono"}, state.lastCommitDay)) : null
@@ -793,15 +1001,16 @@
                 h("div", null,
                   h("div", {className:"label"}, "TODAY PROGRESS"),
                   h("div", {className:"big"}, `${pct(computed.completion)}%`),
-                  h("div", {className:"muted"}, `النسبة عادلة (importance) • EXP اليوم: +${Math.round(computed.exp)}`)
+                  h("div", {className:"muted"}, `النسبة عادلة (importance) • EXP اليوم (إذا ≥70%): +${Math.round(computed.exp)}`),
+                  h("div", {className:"muted", style:{marginTop:6}}, `عقوبة Net EXP إذا <70% (حسب Level): -${expPenaltyPreview}`)
                 ),
                 h("div", {className:"progress-side"},
                   h("div", {className:"bar"},
                     h("div", {className:"fill", style:{width:`${pct(computed.completion)}%`}})
                   ),
                   h("div", {className:"tiny", style:{marginTop:8}},
-                    h("span", null, "≥ 70% يزيد HP + يُحسب اليوم"),
-                    h("span", null, "< 50% ينقص HP بقوة")
+                    h("span", null, "≥ 70% يزيد HP + يُحسب يوم"),
+                    h("span", null, "< 70% = خصم Net EXP")
                   )
                 )
               ),
@@ -864,6 +1073,49 @@
                   setNewTitle(""); setNewTarget(10); setNewImportance(3); setNewType("PH");
                 }}, "+")
               )
+            ),
+
+            /* ✅ نقل: أيام الالتزام + منحناه إلى العمود العريض (هنا) */
+            h("div", {className:"card"},
+              h("div", {className:"label"}, "COMMIT STATS"),
+              h("div", {className:"section-title"}, "أيام الالتزام الحالية + منحناها"),
+              h("div", {className:"mini-stats"},
+                h("div", {className:"mini"},
+                  h("div", {className:"mini-v"}, state.commitDays, h("span", null, " يوم")),
+                  h("div", {className:"mini-l"}, "Commit Days (Live)")
+                ),
+                h("div", {className:"mini"},
+                  h("div", {className:"mini-v"}, rank.label),
+                  h("div", {className:"mini-l"}, "RANK الحالي")
+                ),
+                h("div", {className:"mini"},
+                  h("div", {className:"mini-v"}, `${commitPoints.length}`, h("span", null, " يوم")),
+                  h("div", {className:"mini-l"}, "أيام مسجلة بالمنحنى")
+                )
+              ),
+              h(CommitChart, {points: commitPoints})
+            ),
+
+            /* ✅ إضافة: Net EXP + منحنى Net EXP تحت ADD TASK */
+            h("div", {className:"card"},
+              h("div", {className:"label"}, "NET EXP"),
+              h("div", {className:"section-title"}, "صافي EXP المتراكمة + منحناها"),
+              h("div", {className:"muted"}, "تزيد إذا اليوم ≥70%، وتنقص إذا <70% بعقوبة تكبر مع الـ Level."),
+              h("div", {className:"mini-stats"},
+                h("div", {className:"mini"},
+                  h("div", {className:"mini-v"}, Math.round(state.totalExp)),
+                  h("div", {className:"mini-l"}, "Net EXP (Live)")
+                ),
+                h("div", {className:"mini"},
+                  h("div", {className:"mini-v"}, level.level),
+                  h("div", {className:"mini-l"}, "Level (يتأثر مباشرة)")
+                ),
+                h("div", {className:"mini"},
+                  h("div", {className:"mini-v"}, `-${expPenaltyPreview}`),
+                  h("div", {className:"mini-l"}, "عقوبة اليوم إذا فشل")
+                )
+              ),
+              h(ExpChart, {points: expPoints})
             )
           ),
 
@@ -891,27 +1143,13 @@
 
             h("div", {className:"card"},
               h("div", {className:"label"}, "SYSTEM NOTES"),
-              h("div", {className:"note"},
-                "• اليوم يُغلق تلقائيًا عند 00:00 ويحفظ النتائج."
-              ),
-              h("div", {className:"note"},
-                "• الإنجاز عادل: يعتمد على Importance (وزن المهمة) وليس على Target."
-              ),
-              h("div", {className:"note"},
-                "• HP Rule: إذا ≥ 70% ⇒ +6 HP + يُحسب يوم التزام. إذا بين 50% و 69% ⇒ -4 HP. إذا < 50% ⇒ -12 HP."
-              ),
-              h("div", {className:"note"},
-                "• إذا HP وصل 0 ⇒ قفل 24 ساعة."
-              ),
-              h("div", {className:"note"},
-                "• EXP: يُحسب من الإنجاز الفعلي داخل المهمة × Importance × Multiplier النوع."
-              ),
-              h("div", {className:"note"},
-                "• RANK حسب أيام الالتزام: D=7، C=30، B=90، A=180، S=365."
-              ),
-              h("div", {className:"note"},
-                "• عقوبة الرانك عند عدم الالتزام: تنقص أيام الالتزام حسب رتبتك (E=0, D=1, C=3, B=7, A=14, S=30)."
-              )
+              h("div", {className:"note"}, "• اليوم يُغلق تلقائيًا عند 00:00 ويحفظ النتائج."),
+              h("div", {className:"note"}, "• الإنجاز عادل: يعتمد على Importance (وزن المهمة) وليس على Target."),
+              h("div", {className:"note"}, "• HP Rule: إذا ≥ 70% ⇒ +6 HP + يُحسب يوم التزام. إذا بين 50% و 69% ⇒ -4 HP. إذا < 50% ⇒ -12 HP."),
+              h("div", {className:"note"}, "• إذا HP وصل 0 ⇒ قفل 24 ساعة."),
+              h("div", {className:"note"}, "• Net EXP: إذا ≥70% تُضاف EXP اليوم، وإذا <70% تُخصم EXP بعقوبة تزيد مع الـ Level."),
+              h("div", {className:"note"}, "• RANK حسب أيام الالتزام: D=7، C=30، B=90، A=180، S=365."),
+              h("div", {className:"note"}, "• عقوبة الرانك عند عدم الالتزام: تنقص أيام الالتزام حسب رتبتك (E=0, D=1, C=3, B=7, A=14, S=30).")
             )
           )
         ),
