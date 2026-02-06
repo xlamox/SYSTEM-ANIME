@@ -1,17 +1,18 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>RISE SYSTEM™</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@200..800&family=IBM+Plex+Sans+Arabic:wght@100..700&display=swap" rel="stylesheet">
+
   <style>
     :root{
       --background: 235 35% 6%;
       --foreground: 210 40% 96%;
-      --card: 235 32% 8%;
-      --border: 240 18% 16%;
-
       --chart-1: 195 100% 55%;
       --chart-2: 280 85% 64%;
       --chart-3: 155 80% 48%;
@@ -20,55 +21,99 @@
 
       --font-sans: "IBM Plex Sans Arabic", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       --font-display: "Oxanium", "IBM Plex Sans Arabic", system-ui, sans-serif;
-
-      --rise-glow: 0 0 0 1px hsl(210 40% 98% / 0.06), 0 0 60px hsl(195 100% 55% / 0.10);
-
-      --rise-grid:
-        radial-gradient(900px 700px at 75% 15%, hsl(195 100% 55% / 0.10), transparent 55%),
-        radial-gradient(700px 500px at 12% 12%, hsl(280 85% 64% / 0.10), transparent 55%),
-        radial-gradient(700px 520px at 20% 82%, hsl(155 80% 48% / 0.08), transparent 55%),
-        linear-gradient(to bottom, hsl(235 35% 5%), hsl(240 32% 7%));
     }
-
-    @import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@200..800&family=IBM+Plex+Sans+Arabic:wght@100..700&display=swap');
 
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0; font-family:var(--font-sans); background:hsl(var(--background)); color:hsl(var(--foreground));}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-
-    /* ===== Space Background Layer ===== */
-    .space-bg{
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
+    body{
+      margin:0;
+      font-family:var(--font-sans);
+      color:hsl(var(--foreground));
+      background:hsl(var(--background));
+      overflow-x:hidden;
     }
-    .space-bg canvas{
-      width:100%;
-      height:100%;
-      display:block;
-      /* يعطي إحساس “نيون/فضاء” بدون ما يزعج */
-      filter: saturate(1.15) contrast(1.08);
+
+    /* ✅ خلفية فضاء متحركة تلقائيًا (بدون ماوس/بدون JS) */
+    .bg-anim{
+      position:fixed;
+      inset:-18%;
+      z-index:-2;
+      background:
+        radial-gradient(1200px 900px at 20% 25%, hsl(var(--chart-2) / 0.22), transparent 60%),
+        radial-gradient(1100px 850px at 80% 30%, hsl(var(--chart-1) / 0.22), transparent 62%),
+        radial-gradient(1000px 800px at 25% 85%, hsl(var(--chart-3) / 0.18), transparent 60%),
+        radial-gradient(900px 700px at 85% 80%, hsl(var(--chart-4) / 0.10), transparent 62%),
+        linear-gradient(to bottom, hsl(235 35% 6%), hsl(240 32% 7%));
+      background-size: 140% 140%;
+      animation: spaceDrift 18s ease-in-out infinite;
+      transform: translateZ(0);
+      will-change: transform, filter, background-position;
+    }
+
+    /* “سديم/نِيبولا” */
+    .bg-anim::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        conic-gradient(from 210deg at 50% 50%,
+          transparent 0deg,
+          hsl(var(--chart-1) / 0.07) 70deg,
+          transparent 140deg,
+          hsl(var(--chart-2) / 0.07) 220deg,
+          transparent 360deg);
+      filter: blur(20px);
       opacity: .95;
+      animation: nebulaSpin 28s linear infinite;
+      mix-blend-mode: screen;
+      pointer-events:none;
     }
 
-    /* محتوى الموقع فوق الخلفية */
-    .rise-bg{
-      min-height:100vh;
-      position: relative;
-      z-index: 1;
-      background: var(--rise-grid);
+    /* “نجوم” خفيفة جدًا (بدون كواكب) */
+    .bg-anim::after{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,.12) 0 1px, transparent 2px),
+        radial-gradient(circle at 35% 40%, rgba(255,255,255,.10) 0 1px, transparent 2px),
+        radial-gradient(circle at 70% 25%, rgba(255,255,255,.12) 0 1px, transparent 2px),
+        radial-gradient(circle at 85% 55%, rgba(255,255,255,.10) 0 1px, transparent 2px),
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,.10) 0 1px, transparent 2px),
+        radial-gradient(circle at 55% 78%, rgba(255,255,255,.08) 0 1px, transparent 2px);
+      opacity:.55;
+      filter: blur(.2px);
+      animation: starsFloat 14s ease-in-out infinite;
+      pointer-events:none;
     }
+
+    @keyframes spaceDrift{
+      0%   { background-position: 45% 55%; transform: scale(1); filter: hue-rotate(0deg); }
+      50%  { background-position: 60% 40%; transform: scale(1.03); filter: hue-rotate(10deg); }
+      100% { background-position: 45% 55%; transform: scale(1); filter: hue-rotate(0deg); }
+    }
+    @keyframes nebulaSpin{
+      from{ transform: rotate(0deg); }
+      to{ transform: rotate(360deg); }
+    }
+    @keyframes starsFloat{
+      0%   { transform: translate(0px,0px); opacity:.50; }
+      50%  { transform: translate(14px,-10px); opacity:.60; }
+      100% { transform: translate(0px,0px); opacity:.50; }
+    }
+
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
     .wrap{max-width:1100px; margin:0 auto; padding:28px 16px 40px;}
 
     .header{position:relative}
     .hero-glow{
       position:absolute; top:-40px; left:50%; transform:translateX(-50%);
-      width:720px; height:180px; border-radius:999px;
-      background: radial-gradient(circle at center, hsl(var(--chart-1) / 0.22), transparent 62%);
-      filter: blur(26px);
+      width:760px; height:200px; border-radius:999px;
+      background: radial-gradient(circle at center, hsl(var(--chart-1) / 0.28), transparent 62%);
+      filter: blur(22px);
       pointer-events:none;
+      opacity:.9;
     }
 
     .top-row{display:flex; gap:16px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap;}
@@ -76,116 +121,112 @@
     .badge{
       display:inline-flex; align-items:center; gap:10px;
       padding:8px 12px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.05);
-      font-size:12px; color: rgba(255,255,255,.85);
-      backdrop-filter: blur(8px);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      font-size:12px; color: rgba(255,255,255,.92);
     }
-    .dot{width:10px;height:10px;border-radius:50%; background:hsl(var(--chart-1)); box-shadow: 0 0 18px hsl(var(--chart-1) / .55);}
+    .dot{width:10px;height:10px;border-radius:50%; background:hsl(var(--chart-1)); box-shadow: 0 0 18px hsl(var(--chart-1) / .60);}
     .brand-name{font-family:var(--font-display); letter-spacing:.6px}
-    .brand-sub{color:rgba(255,255,255,.55)}
+    .brand-sub{color:rgba(255,255,255,.60)}
 
     .title{margin:12px 0 6px; font-family:var(--font-display); font-size:40px; line-height:1.1;}
-    .subtitle{margin:0; max-width:650px; color:rgba(255,255,255,.70); font-size:14.5px; line-height:1.7;}
+    .subtitle{margin:0; max-width:680px; color:rgba(255,255,255,.78); font-size:14.5px; line-height:1.7;}
 
     .chips{margin-top:12px; display:flex; flex-wrap:wrap; gap:8px;}
     .chip{
       display:inline-flex; align-items:center; gap:8px;
       padding:8px 12px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.05);
-      font-size:12px; color: rgba(255,255,255,.75);
-      backdrop-filter: blur(8px);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      font-size:12px; color: rgba(255,255,255,.82);
     }
-    .chip-mono{font-family: ui-monospace, monospace; color: rgba(255,255,255,.9)}
+    .chip-mono{font-family: ui-monospace, monospace; color: rgba(255,255,255,.92)}
 
     .stats{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; width:360px; max-width:100%;}
     .stat{
       border-radius:18px; padding:12px;
-      border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.04);
-      box-shadow: var(--rise-glow);
-      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
     }
-    .stat-k{font-size:11px; letter-spacing:2px; color: rgba(255,255,255,.65)}
+    .stat-k{font-size:11px; letter-spacing:2px; color: rgba(255,255,255,.72)}
     .stat-v{margin-top:6px; font-family:var(--font-display); font-size:22px}
-    .stat-s{margin-top:4px; font-size:11px; color: rgba(255,255,255,.60)}
+    .stat-s{margin-top:4px; font-size:11px; color: rgba(255,255,255,.66)}
 
-    .stat-hp{border-color:hsl(var(--chart-3) / .35); background:hsl(var(--chart-3) / .10)}
-    .stat-level{border-color:hsl(var(--chart-1) / .35); background:hsl(var(--chart-1) / .10)}
-    .stat-rank{border-color:hsl(var(--chart-2) / .35); background:hsl(var(--chart-2) / .10)}
+    .stat-hp{border-color:hsl(var(--chart-3) / .35); background:hsl(var(--chart-3) / .12)}
+    .stat-level{border-color:hsl(var(--chart-1) / .35); background:hsl(var(--chart-1) / .12)}
+    .stat-rank{border-color:hsl(var(--chart-2) / .35); background:hsl(var(--chart-2) / .12)}
 
     .locked{
       margin-top:16px; border-radius:18px;
       border:1px solid hsl(var(--chart-5) / .35);
-      background:hsl(var(--chart-5) / .10);
+      background:hsl(var(--chart-5) / .12);
       padding:10px 14px;
-      backdrop-filter: blur(10px);
     }
-    .locked-row{display:flex; justify-content:space-between; align-items:center; gap:10px; color: rgba(255,255,255,.9); font-size:13px;}
+    .locked-row{display:flex; justify-content:space-between; align-items:center; gap:10px; color: rgba(255,255,255,.95); font-size:13px;}
 
     .main{margin-top:22px; display:grid; gap:14px; grid-template-columns:1.35fr .65fr;}
     @media (max-width:980px){ .main{grid-template-columns:1fr} }
 
     .card{
-      border-radius:24px; border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      padding:14px; box-shadow: var(--rise-glow);
-      backdrop-filter: blur(12px);
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
+      padding:14px;
     }
 
-    .label{font-size:11px; letter-spacing:2px; color: rgba(255,255,255,.60)}
+    .label{font-size:11px; letter-spacing:2px; color: rgba(255,255,255,.70)}
     .section-title{margin-top:6px; font-family:var(--font-display); font-size:18px}
-    .muted{color: rgba(255,255,255,.60); font-size:12px}
-    .tiny{display:flex; justify-content:space-between; gap:10px; color: rgba(255,255,255,.55); font-size:11px}
+    .muted{color: rgba(255,255,255,.70); font-size:12px}
+    .tiny{display:flex; justify-content:space-between; gap:10px; color: rgba(255,255,255,.64); font-size:11px}
 
     .card-row{display:flex; gap:12px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap;}
-    .quote{margin-top:6px; font-family:var(--font-display); font-size:18px; color: rgba(255,255,255,.92);}
+    .quote{margin-top:6px; font-family:var(--font-display); font-size:18px; color: rgba(255,255,255,.95);}
 
     .progress-row{display:flex; gap:14px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap;}
     .big{margin-top:6px; font-family: var(--font-display); font-size:34px}
 
     .progress-side{width:280px; max-width:100%}
-    .bar{width:100%; height:10px; border-radius:999px; background: rgba(255,255,255,.10); overflow:hidden;}
-    .fill{height:100%; width:0%; background:hsl(var(--chart-1)); box-shadow: 0 0 18px hsl(var(--chart-1)/.35);}
+    .bar{width:100%; height:10px; border-radius:999px; background: rgba(255,255,255,.12); overflow:hidden;}
+    .fill{height:100%; width:0%; background:hsl(var(--chart-1)); box-shadow: 0 0 18px hsl(var(--chart-1)/.35); transition: width .25s ease; }
 
     .task-list{margin-top:12px; display:grid; gap:10px;}
-    .task{border-radius:18px; border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.03); padding:12px; backdrop-filter: blur(12px);}
+    .task{border-radius:18px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); padding:12px;}
     .task-top{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;}
 
     .tag{
       display:inline-flex; align-items:center; gap:8px;
       border-radius:999px; border:1px solid rgba(255,255,255,.18);
       padding:6px 10px; font-size:11px;
-      backdrop-filter: blur(8px);
     }
     .tag.ph{background:hsl(var(--chart-3)/.16); color:hsl(var(--chart-3)); border-color:hsl(var(--chart-3)/.28)}
     .tag.iq{background:hsl(var(--chart-1)/.16); color:hsl(var(--chart-1)); border-color:hsl(var(--chart-1)/.28)}
     .tag.sp{background:hsl(var(--chart-2)/.16); color:hsl(var(--chart-2)); border-color:hsl(var(--chart-2)/.28)}
 
-    .task-title{font-family:var(--font-display); font-size:15px; color: rgba(255,255,255,.95); max-width:360px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-    .task-meta{margin-top:6px; display:flex; flex-wrap:wrap; gap:10px; font-size:11px; color: rgba(255,255,255,.60)}
+    .task-title{font-family:var(--font-display); font-size:15px; color: rgba(255,255,255,.96); max-width:360px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+    .task-meta{margin-top:6px; display:flex; flex-wrap:wrap; gap:10px; font-size:11px; color: rgba(255,255,255,.70)}
 
     .task-controls{display:flex; align-items:center; gap:8px;}
     .input{
       width:100%; padding:10px 12px; border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.05);
-      color: rgba(255,255,255,.92);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.96);
       outline:none;
     }
     .input:disabled{opacity:.6}
     .small{width:92px; padding:8px 10px; border-radius:14px;}
 
     .btn{
-      cursor:pointer; border:1px solid rgba(255,255,255,.10);
+      cursor:pointer; border:1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.92);
+      color: rgba(255,255,255,.96);
       padding:10px 14px;
       border-radius:18px;
       transition:.15s;
-      backdrop-filter: blur(8px);
     }
     .btn:hover{background: rgba(255,255,255,.10)}
     .btn:disabled{opacity:.55; cursor:not-allowed}
-    .btn-ghost{background: rgba(255,255,255,.05)}
+    .btn-ghost{background: rgba(255,255,255,.06)}
     .btn-green{
       width:44px; padding:10px 0;
       border-color:hsl(var(--chart-3)/.30);
@@ -198,34 +239,32 @@
 
     .radar-wrap{
       margin-top:10px; width:100%;
-      border-radius:18px; border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
+      border-radius:18px; border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
       overflow:hidden; display:flex; justify-content:center; align-items:center;
       padding:8px;
-      backdrop-filter: blur(12px);
     }
     .radar-wrap canvas{max-width:100%; height:auto}
 
     .mini-stats{margin-top:10px; display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
-    .mini{border-radius:18px; border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.03); padding:10px; backdrop-filter: blur(12px);}
+    .mini{border-radius:18px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); padding:10px;}
     .mini-v{font-family:var(--font-display); font-size:20px;}
-    .mini-v span{font-size:12px; color: rgba(255,255,255,.45)}
-    .mini-l{margin-top:4px; font-size:11px; color: rgba(255,255,255,.55)}
+    .mini-v span{font-size:12px; color: rgba(255,255,255,.55)}
+    .mini-l{margin-top:4px; font-size:11px; color: rgba(255,255,255,.68)}
 
     .note{
       margin-top:10px; border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
       padding:10px;
-      color: rgba(255,255,255,.72);
-      font-size:13px; line-height:1.6;
-      backdrop-filter: blur(12px);
+      color: rgba(255,255,255,.78);
+      font-size:13px; line-height:1.65;
     }
 
     .footer{
       margin-top:18px; padding-top:14px;
-      border-top:1px solid rgba(255,255,255,.10);
-      color: rgba(255,255,255,.55);
+      border-top:1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.70);
       font-size:12px;
       display:flex; flex-direction:column; gap:6px;
     }
@@ -238,17 +277,16 @@
       gap:10px;
       padding:10px 12px;
       border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      backdrop-filter: blur(12px);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
     }
   </style>
 </head>
 
 <body>
+  <div class="bg-anim"></div>
   <div id="root"></div>
 
-  <!-- React -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
@@ -256,185 +294,6 @@
     const h = React.createElement;
     const { useEffect, useMemo, useRef, useState } = React;
 
-    /* ===== Space Background (Stars + Planets) ===== */
-    function SpaceBG(){
-      const ref = useRef(null);
-
-      useEffect(()=>{
-        const canvas = ref.current;
-        const ctx = canvas.getContext("2d");
-
-        let w=0,h=0,dpr=1;
-        function resize(){
-          dpr = Math.max(1, Math.min(2, window.devicePixelRatio||1));
-          w = canvas.width  = Math.floor(window.innerWidth  * dpr);
-          h = canvas.height = Math.floor(window.innerHeight * dpr);
-        }
-        resize();
-        window.addEventListener("resize", resize);
-
-        // Stars (parallax groups)
-        function makeStars(n, speedMin, speedMax, sizeMin, sizeMax, alphaMin, alphaMax){
-          return Array.from({length:n}, () => ({
-            x: Math.random()*w,
-            y: Math.random()*h,
-            r: (Math.random()*(sizeMax-sizeMin)+sizeMin)*dpr,
-            vx: (Math.random()*(speedMax-speedMin)+speedMin)*dpr,
-            a: Math.random()*(alphaMax-alphaMin)+alphaMin,
-            tw: Math.random()*0.8 + 0.2,
-            ph: Math.random()*Math.PI*2
-          }));
-        }
-
-        const starsFar  = makeStars(220, 0.03, 0.12, 0.4, 1.0, 0.10, 0.35);
-        const starsMid  = makeStars(160, 0.10, 0.30, 0.7, 1.6, 0.18, 0.45);
-        const starsNear = makeStars( 90, 0.30, 0.70, 1.0, 2.2, 0.22, 0.55);
-
-        // Planets (orbiting)
-        const planets = [
-          { orbitR: 220, size: 34, speed: 0.0022, phase: 0.2, colA:"rgba(120,220,255,0.35)", colB:"rgba(0,120,255,0.05)", ring:true },
-          { orbitR: 340, size: 52, speed: 0.0014, phase: 1.4, colA:"rgba(170,90,255,0.28)", colB:"rgba(80,0,160,0.06)", ring:false },
-          { orbitR: 470, size: 24, speed: 0.0029, phase: 2.1, colA:"rgba(0,255,180,0.22)", colB:"rgba(0,120,90,0.05)", ring:false },
-        ].map(p => ({
-          ...p,
-          orbitR: p.orbitR * dpr,
-          size: p.size * dpr
-        }));
-
-        let t=0;
-        let raf=0;
-
-        function drawStars(stars){
-          for(const s of stars){
-            // move left to right (or opposite)
-            s.x += s.vx;
-            if(s.x > w + 20*dpr) s.x = -20*dpr;
-
-            // twinkle
-            const tw = 0.65 + 0.35*Math.sin(t*0.02*s.tw + s.ph);
-
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-            ctx.fillStyle = `rgba(255,255,255,${(s.a*tw).toFixed(3)})`;
-            ctx.fill();
-          }
-        }
-
-        function planetAt(centerX, centerY, p){
-          const ang = p.phase + t * p.speed;
-          const x = centerX + Math.cos(ang) * p.orbitR;
-          const y = centerY + Math.sin(ang) * (p.orbitR*0.55);
-
-          // glow planet
-          const g = ctx.createRadialGradient(x - p.size*0.25, y - p.size*0.25, p.size*0.1, x, y, p.size*1.6);
-          g.addColorStop(0.00, p.colA);
-          g.addColorStop(0.35, "rgba(255,255,255,0.10)");
-          g.addColorStop(1.00, p.colB);
-
-          ctx.beginPath();
-          ctx.arc(x, y, p.size, 0, Math.PI*2);
-          ctx.fillStyle = g;
-          ctx.fill();
-
-          // inner body
-          const g2 = ctx.createRadialGradient(x - p.size*0.35, y - p.size*0.35, p.size*0.2, x, y, p.size);
-          g2.addColorStop(0.0, "rgba(255,255,255,0.18)");
-          g2.addColorStop(0.35, "rgba(255,255,255,0.06)");
-          g2.addColorStop(1.0, "rgba(0,0,0,0.08)");
-          ctx.beginPath();
-          ctx.arc(x, y, p.size*0.92, 0, Math.PI*2);
-          ctx.fillStyle = g2;
-          ctx.fill();
-
-          // ring (optional)
-          if(p.ring){
-            ctx.save();
-            ctx.translate(x,y);
-            ctx.rotate(-0.35);
-            ctx.beginPath();
-            ctx.ellipse(0, 0, p.size*1.45, p.size*0.55, 0, 0, Math.PI*2);
-            ctx.strokeStyle = "rgba(200,240,255,0.18)";
-            ctx.lineWidth = 2*dpr;
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.ellipse(0, 0, p.size*1.20, p.size*0.42, 0, 0, Math.PI*2);
-            ctx.strokeStyle = "rgba(0,229,255,0.12)";
-            ctx.lineWidth = 1.5*dpr;
-            ctx.stroke();
-            ctx.restore();
-          }
-
-          // orbit hint (very subtle)
-          ctx.beginPath();
-          ctx.ellipse(centerX, centerY, p.orbitR, p.orbitR*0.55, 0, 0, Math.PI*2);
-          ctx.strokeStyle = "rgba(255,255,255,0.02)";
-          ctx.lineWidth = 1*dpr;
-          ctx.stroke();
-        }
-
-        function frame(){
-          t += 1;
-
-          // deep space gradient
-          ctx.clearRect(0,0,w,h);
-          ctx.globalCompositeOperation = "source-over";
-          const bg = ctx.createLinearGradient(0,0,0,h);
-          bg.addColorStop(0, "rgba(6,8,22,1)");
-          bg.addColorStop(1, "rgba(10,10,28,1)");
-          ctx.fillStyle = bg;
-          ctx.fillRect(0,0,w,h);
-
-          // nebulas (soft)
-          ctx.globalCompositeOperation = "screen";
-          const cx1 = w*0.25, cy1 = h*0.28;
-          const n1 = ctx.createRadialGradient(cx1, cy1, 0, cx1, cy1, Math.min(w,h)*0.55);
-          n1.addColorStop(0.0, "rgba(120,0,255,0.10)");
-          n1.addColorStop(0.6, "rgba(0,229,255,0.06)");
-          n1.addColorStop(1.0, "rgba(0,0,0,0)");
-          ctx.fillStyle = n1; ctx.fillRect(0,0,w,h);
-
-          const cx2 = w*0.75, cy2 = h*0.70;
-          const n2 = ctx.createRadialGradient(cx2, cy2, 0, cx2, cy2, Math.min(w,h)*0.65);
-          n2.addColorStop(0.0, "rgba(0,255,180,0.08)");
-          n2.addColorStop(0.55, "rgba(120,180,255,0.05)");
-          n2.addColorStop(1.0, "rgba(0,0,0,0)");
-          ctx.fillStyle = n2; ctx.fillRect(0,0,w,h);
-
-          // stars layers
-          ctx.globalCompositeOperation = "screen";
-          drawStars(starsFar);
-          drawStars(starsMid);
-          drawStars(starsNear);
-
-          // planets (center a bit upper)
-          const pcx = w*0.55;
-          const pcy = h*0.34;
-          for(const p of planets) planetAt(pcx, pcy, p);
-
-          // subtle vignette
-          ctx.globalCompositeOperation = "source-over";
-          const v = ctx.createRadialGradient(w*0.5,h*0.45, Math.min(w,h)*0.20, w*0.5,h*0.45, Math.min(w,h)*0.85);
-          v.addColorStop(0,"rgba(0,0,0,0)");
-          v.addColorStop(1,"rgba(0,0,0,0.35)");
-          ctx.fillStyle = v;
-          ctx.fillRect(0,0,w,h);
-
-          raf = requestAnimationFrame(frame);
-        }
-
-        raf = requestAnimationFrame(frame);
-
-        return ()=>{
-          cancelAnimationFrame(raf);
-          window.removeEventListener("resize", resize);
-        };
-      }, []);
-
-      return h("div", {className:"space-bg"}, h("canvas", {ref}));
-    }
-
-    /* ===== Your App Logic (unchanged) ===== */
     const TYPE_META = {
       PH: { label: "قوة جسدية", multiplier: 2.0 },
       IQ: { label: "ذكاء وتعلّم", multiplier: 1.7 },
@@ -442,13 +301,23 @@
     };
 
     const RANKS = [
-      { key: "E", days: 0, label: "E" },
-      { key: "D", days: 7, label: "D" },
-      { key: "C", days: 30, label: "C" },
-      { key: "B", days: 90, label: "B" },
+      { key: "E", days: 0,   label: "E" },
+      { key: "D", days: 7,   label: "D" },
+      { key: "C", days: 30,  label: "C" },
+      { key: "B", days: 90,  label: "B" },
       { key: "A", days: 180, label: "A" },
       { key: "S", days: 365, label: "S Elite" },
     ];
+
+    // ✅ عقوبة الالتزام حسب الرانك الحالي (تأثيرها فقط على commitDays)
+    const RANK_PENALTY = {
+      E: 0,
+      D: 1,
+      C: 3,
+      B: 7,
+      A: 14,
+      S: 30
+    };
 
     const QUOTES = [
       "أنت لا تبحث عن الحماس… أنت تبني الانضباط.",
@@ -470,7 +339,6 @@
 
     function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
     function pct(n){ return Math.round(n * 100); }
-    function format2(n){ return (Math.round(n * 100) / 100).toFixed(2); }
 
     function todayKeyLocal(){
       const d = new Date();
@@ -522,9 +390,49 @@
       return `${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}:${String(ss).padStart(2,"0")}`;
     }
 
-    const STORAGE_KEY = "RISE_SYSTEM_SPACE_BG_V1";
-    function loadState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw?JSON.parse(raw):null; }catch{ return null; } }
+    const STORAGE_KEY = "RISE_SYSTEM_INDEX_FULL_V5";
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return null;
+        return JSON.parse(raw);
+      }catch{ return null; }
+    }
     function saveState(s){ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+
+    /* ✅ الإنجاز العادل: يعتمد على importance كوزن ثابت */
+    function computeToday(tasks){
+      const totals = {
+        scoreDone: 0,
+        scoreTotal: 0,
+        completion: 0,
+        exp: 0,
+        byType: {PH:0, IQ:0, SP:0},
+        byTypePotential: {PH:0, IQ:0, SP:0},
+      };
+      const SCORE_UNIT = 10;
+
+      for(const t of tasks){
+        const importance = Number(t.importance || 1);
+        const weight = importance * SCORE_UNIT;
+
+        const target = Math.max(1, Number(t.target || 1));
+        const done = clamp(Number(t.done || 0), 0, target);
+        const progress = target > 0 ? (done / target) : 0;
+
+        totals.scoreTotal += weight;
+        totals.scoreDone += weight * progress;
+
+        const mul = TYPE_META[t.type].multiplier;
+        totals.exp += done * importance * mul;
+
+        totals.byType[t.type] += weight * progress;
+        totals.byTypePotential[t.type] += weight;
+      }
+
+      totals.completion = totals.scoreTotal > 0 ? (totals.scoreDone / totals.scoreTotal) : 0;
+      return totals;
+    }
 
     function polygon(ctx, cx, cy, r, sides, rot){
       ctx.beginPath();
@@ -537,16 +445,16 @@
       ctx.closePath();
     }
 
+    /* ✅ Radar: أنيميشن ناعم عند تغيير القيم */
     function RadarCanvas(props){
       const ref = useRef(null);
+      const prevRef = useRef({PH:0, IQ:0, SP:0});
+      const animRef = useRef(null);
 
-      useEffect(()=>{
+      function draw(vals){
         const canvas = ref.current;
         if(!canvas) return;
         const ctx = canvas.getContext("2d");
-
-        const vals = props.values || {PH:0, IQ:0, SP:0};
-
         const w = canvas.width, hh = canvas.height;
         ctx.clearRect(0,0,w,hh);
 
@@ -554,7 +462,7 @@
         const radius = Math.min(w, hh) * 0.33;
 
         ctx.save();
-        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+        ctx.strokeStyle = "rgba(255,255,255,0.12)";
         ctx.lineWidth = 1;
 
         for(let r=1;r<=4;r++){
@@ -579,7 +487,7 @@
           ctx.lineTo(x,y);
           ctx.stroke();
 
-          ctx.fillStyle = "rgba(255,255,255,0.70)";
+          ctx.fillStyle = "rgba(255,255,255,0.78)";
           ctx.font = "16px IBM Plex Sans Arabic, sans-serif";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
@@ -598,13 +506,13 @@
         ctx.lineTo(arr[2].x, arr[2].y);
         ctx.closePath();
 
-        ctx.fillStyle = "rgba(0,229,255,0.18)";
+        ctx.fillStyle = "rgba(0,229,255,0.20)";
         ctx.fill();
-        ctx.strokeStyle = "rgba(0,229,255,0.85)";
+        ctx.strokeStyle = "rgba(0,229,255,0.88)";
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.fillStyle = "rgba(0,229,255,0.9)";
+        ctx.fillStyle = "rgba(0,229,255,0.95)";
         arr.forEach(p=>{
           ctx.beginPath();
           ctx.arc(p.x,p.y,4,0,Math.PI*2);
@@ -612,6 +520,34 @@
         });
 
         ctx.restore();
+      }
+
+      useEffect(()=>{
+        const next = props.values || {PH:0, IQ:0, SP:0};
+        const from = prevRef.current;
+
+        if(animRef.current) cancelAnimationFrame(animRef.current);
+
+        const start = performance.now();
+        const dur = 320;
+        function lerp(a,b,t){ return a + (b-a)*t; }
+        function ease(t){ return 1 - Math.pow(1-t, 3); }
+
+        function step(now){
+          const t = Math.min(1, (now - start) / dur);
+          const k = ease(t);
+          const cur = {
+            PH: lerp(from.PH, next.PH, k),
+            IQ: lerp(from.IQ, next.IQ, k),
+            SP: lerp(from.SP, next.SP, k),
+          };
+          draw(cur);
+          if(t < 1) animRef.current = requestAnimationFrame(step);
+          else prevRef.current = {PH: next.PH, IQ: next.IQ, SP: next.SP};
+        }
+        animRef.current = requestAnimationFrame(step);
+
+        return ()=> { if(animRef.current) cancelAnimationFrame(animRef.current); };
       }, [props.values]);
 
       return h("div", {className:"radar-wrap"},
@@ -626,7 +562,7 @@
           day: todayKeyLocal(),
           tasks: [
             { id:"t1", title:"صلاة", target:5, importance:5, type:"SP", done:0 },
-            { id:"t2", title:"Push-ups", target:100, importance:4, type:"PH", done:0 },
+            { id:"t2", title:"Push-ups", target:300, importance:4, type:"PH", done:0 },
             { id:"t3", title:"قراءة", target:30, importance:3, type:"IQ", done:0 },
           ],
           totalExp: 0,
@@ -643,33 +579,12 @@
       });
 
       const [countdownMs, setCountdownMs] = useState(msToMidnight());
-
       useEffect(()=>{ saveState(state); }, [state]);
 
       useEffect(()=>{
         const t = setInterval(()=> setCountdownMs(msToMidnight()), 1000);
         return ()=>clearInterval(t);
       }, []);
-
-      function computeToday(tasks){
-        const totals = {
-          done: 0, target: 0, exp: 0,
-          byType: {PH:0, IQ:0, SP:0},
-          byTypePotential: {PH:0, IQ:0, SP:0},
-        };
-        for(const tt of tasks){
-          const effDone = clamp(tt.done, 0, tt.target);
-          totals.done += effDone;
-          totals.target += tt.target;
-          const mul = TYPE_META[tt.type].multiplier;
-          const gain = effDone * tt.importance * mul;
-          totals.exp += gain;
-          totals.byType[tt.type] += gain;
-          totals.byTypePotential[tt.type] += tt.target * tt.importance * mul;
-        }
-        const completion = totals.target > 0 ? totals.done/totals.target : 0;
-        return Object.assign({}, totals, {completion});
-      }
 
       const computed = useMemo(()=>computeToday(state.tasks), [state.tasks]);
       const quote = useMemo(()=>randomQuote(state.day), [state.day]);
@@ -690,12 +605,14 @@
         return {hh, mm};
       }, [state.lockedUntil, countdownMs]);
 
+      // Catchup if day changed while closed
       useEffect(()=>{
         const t = todayKeyLocal();
         if(state.day !== t) finalizeDay();
         // eslint-disable-next-line
       }, []);
 
+      // Auto finalize at midnight
       useEffect(()=>{
         const ms = msToMidnight();
         const to = setTimeout(()=> finalizeDay(), ms + 80);
@@ -743,7 +660,14 @@
           const hp = clamp(prev.hp + delta, 0, 100);
           const lockedUntil = hp === 0 ? (Date.now() + 24*60*60*1000) : null;
 
-          const commitDays = qualifies ? (prev.commitDays + 1) : prev.commitDays;
+          // ✅ هنا العقوبة الجديدة للـ RANK (تأثيرها فقط على commitDays)
+          const currentRank = rankFromStreak(prev.commitDays).key;
+          const penalty = qualifies ? 0 : (RANK_PENALTY[currentRank] ?? 0);
+
+          const commitDays = qualifies
+            ? (prev.commitDays + 1)
+            : Math.max(0, prev.commitDays - penalty);
+
           const lastCommitDay = qualifies ? prev.day : prev.lastCommitDay;
 
           const lifetimeByType = {
@@ -770,200 +694,231 @@
         });
       }
 
-      const radarAllTime = useMemo(()=>{
+      /* ✅ Live Radar: الكلّي + اليوم الحالي فورًا */
+      const radarLive = useMemo(()=>{
         const g = state.lifetimeByType;
         const p = state.lifetimePotentialByType;
-        const ph = p.PH>0 ? g.PH/p.PH : 0;
-        const iq = p.IQ>0 ? g.IQ/p.IQ : 0;
-        const sp = p.SP>0 ? g.SP/p.SP : 0;
+
+        const liveGain = {
+          PH: g.PH + computed.byType.PH,
+          IQ: g.IQ + computed.byType.IQ,
+          SP: g.SP + computed.byType.SP
+        };
+        const livePot = {
+          PH: p.PH + computed.byTypePotential.PH,
+          IQ: p.IQ + computed.byTypePotential.IQ,
+          SP: p.SP + computed.byTypePotential.SP
+        };
+
+        const ph = livePot.PH>0 ? liveGain.PH/livePot.PH : 0;
+        const iq = livePot.IQ>0 ? liveGain.IQ/livePot.IQ : 0;
+        const sp = livePot.SP>0 ? liveGain.SP/livePot.SP : 0;
+
         return { PH: Math.round(ph*100), IQ: Math.round(iq*100), SP: Math.round(sp*100) };
-      }, [state.lifetimeByType, state.lifetimePotentialByType]);
+      }, [state.lifetimeByType, state.lifetimePotentialByType, computed.byType, computed.byTypePotential]);
 
       const [newTitle, setNewTitle] = useState("");
       const [newTarget, setNewTarget] = useState(10);
       const [newImportance, setNewImportance] = useState(3);
       const [newType, setNewType] = useState("PH");
 
-      return h(React.Fragment, null,
-        h(SpaceBG),
-        h("div", {className:"rise-bg"},
-          h("div", {className:"wrap"},
-            h("header", {className:"header"},
-              h("div", {className:"hero-glow"}),
-              h("div", {className:"top-row"},
-                h("div", null,
-                  h("div", {className:"badge"},
-                    h("span", {className:"dot"}),
-                    h("span", {className:"brand-name"}, "RISE SYSTEM™"),
-                    h("span", {className:"brand-sub"}, "Personal Evolution")
-                  ),
-                  h("h1", {className:"title"}, "طوّر شخصيتك… مثل الأنمي"),
-                  h("p", {className:"subtitle"}, "خلفية فضاء متحركة (كواكب + نجوم) — ومهام يومية مع EXP وRadar."),
-                  h("div", {className:"chips"},
-                    h("div", {className:"chip"}, h("span", null, "اليوم:"), h("span", {className:"chip-mono"}, state.day)),
-                    state.lastCommitDay ? h("div", {className:"chip"}, h("span", null, "آخر يوم محسوب:"), h("span", {className:"chip-mono"}, state.lastCommitDay)) : null
-                  ),
-                  h("div", {className:"countdown"},
-                    h("div", {className:"muted"}, "الحفظ التلقائي بعد:"),
-                    h("div", {className:"mono"}, formatCountdown(countdownMs))
-                  )
-                ),
-                h("div", {className:"stats"},
-                  h("div", {className:"stat stat-hp"},
-                    h("div", {className:"stat-k"}, "HP"),
-                    h("div", {className:"stat-v"}, `${state.hp}/100`),
-                    h("div", {className:"stat-s"}, state.hp===0 ? "قفل 24 ساعة" : (state.hp>=70 ? "مستقر" : "خطر"))
-                  ),
-                  h("div", {className:"stat stat-level"},
-                    h("div", {className:"stat-k"}, "LEVEL"),
-                    h("div", {className:"stat-v"}, String(level.level)),
-                    h("div", {className:"stat-s"}, `${level.expIntoLevel}/${level.expForNext} EXP`)
-                  ),
-                  h("div", {className:"stat stat-rank"},
-                    h("div", {className:"stat-k"}, "RANK"),
-                    h("div", {className:"stat-v"}, rank.label),
-                    h("div", {className:"stat-s"}, `${state.commitDays} يوم التزام`)
-                  )
-                )
+      return h("div", {className:"wrap"},
+        h("header", {className:"header"},
+          h("div", {className:"hero-glow"}),
+          h("div", {className:"top-row"},
+            h("div", null,
+              h("div", {className:"badge"},
+                h("span", {className:"dot"}),
+                h("span", {className:"brand-name"}, "RISE SYSTEM™"),
+                h("span", {className:"brand-sub"}, "Personal Evolution")
               ),
-              isLocked ? h("div", {className:"locked"},
-                h("div", {className:"locked-row"},
-                  h("div", null, "تم قفل الدخول مؤقتًا بسبب HP = 0."),
-                  h("div", {className:"mono"}, lockRemaining ? `متبقي ${lockRemaining.hh}h ${lockRemaining.mm}m` : "...")
-                )
-              ) : null
+              h("h1", {className:"title"}, "طوّر شخصيتك… مثل الأنمي"),
+              h("p", {className:"subtitle"}, "الخلفية الآن فضاء متحرك تلقائيًا، والرادار ينتقل بسلاسة مع تغيّر الأرقام."),
+              h("div", {className:"chips"},
+                h("div", {className:"chip"}, h("span", null, "اليوم:"), h("span", {className:"chip-mono"}, state.day)),
+                state.lastCommitDay ? h("div", {className:"chip"}, h("span", null, "آخر يوم محسوب:"), h("span", {className:"chip-mono"}, state.lastCommitDay)) : null
+              ),
+              h("div", {className:"countdown"},
+                h("div", {className:"muted"}, "الحفظ التلقائي بعد:"),
+                h("div", {className:"mono"}, formatCountdown(countdownMs))
+              )
             ),
 
-            h("main", {className:"main"},
-              h("section", {className:"left"},
-                h("div", {className:"card"},
-                  h("div", {className:"card-row"},
-                    h("div", null,
-                      h("div", {className:"label"}, "QUOTE OF THE DAY"),
-                      h("div", {className:"quote"}, `“${quote}”`),
-                      h("div", {className:"muted", style:{marginTop:8}}, "الخلفية: نجوم + كواكب متحركة في الفضاء.")
-                    ),
-                    h("button", {className:"btn btn-ghost", disabled:isLocked, onClick:()=>setState(p=>Object.assign({},p,{day:todayKeyLocal()}))}, "تحديث اليوم")
-                  )
+            h("div", {className:"stats"},
+              h("div", {className:"stat stat-hp"},
+                h("div", {className:"stat-k"}, "HP"),
+                h("div", {className:"stat-v"}, `${state.hp}/100`),
+                h("div", {className:"stat-s"}, state.hp===0 ? "قفل 24 ساعة" : (state.hp>=70 ? "مستقر" : "خطر"))
+              ),
+              h("div", {className:"stat stat-level"},
+                h("div", {className:"stat-k"}, "LEVEL"),
+                h("div", {className:"stat-v"}, String(level.level)),
+                h("div", {className:"stat-s"}, `${level.expIntoLevel}/${level.expForNext} EXP`)
+              ),
+              h("div", {className:"stat stat-rank"},
+                h("div", {className:"stat-k"}, "RANK"),
+                h("div", {className:"stat-v"}, rank.label),
+                h("div", {className:"stat-s"}, `${state.commitDays} يوم التزام`)
+              )
+            )
+          ),
+
+          isLocked ? h("div", {className:"locked"},
+            h("div", {className:"locked-row"},
+              h("div", null, "تم قفل الدخول مؤقتًا بسبب HP = 0."),
+              h("div", {className:"mono"}, lockRemaining ? `متبقي ${lockRemaining.hh}h ${lockRemaining.mm}m` : "...")
+            )
+          ) : null
+        ),
+
+        h("main", {className:"main"},
+          h("section", null,
+            h("div", {className:"card"},
+              h("div", {className:"card-row"},
+                h("div", null,
+                  h("div", {className:"label"}, "QUOTE OF THE DAY"),
+                  h("div", {className:"quote"}, `“${quote}”`),
+                  h("div", {className:"muted", style:{marginTop:8}}, "اليوم يُغلق تلقائيًا عند 00:00.")
                 ),
+                h("button", {
+                  className:"btn btn-ghost",
+                  disabled:isLocked,
+                  onClick:()=>setState(p=>Object.assign({},p,{day:todayKeyLocal()}))
+                }, "تحديث اليوم")
+              )
+            ),
 
-                h("div", {className:"card"},
-                  h("div", {className:"progress-row"},
-                    h("div", null,
-                      h("div", {className:"label"}, "TODAY PROGRESS"),
-                      h("div", {className:"big"}, `${pct(computed.completion)}%`),
-                      h("div", {className:"muted"}, `EXP اليوم: +${Math.round(computed.exp)} • done × importance × multiplier`)
-                    ),
-                    h("div", {className:"progress-side"},
-                      h("div", {className:"bar"}, h("div", {className:"fill", style:{width:`${pct(computed.completion)}%`}})),
-                      h("div", {className:"tiny", style:{marginTop:8}},
-                        h("span", null, "≥ 70% يزيد HP + يُحسب اليوم"),
-                        h("span", null, "< 50% ينقص HP بقوة")
-                      )
-                    )
-                  ),
-
-                  h("div", {className:"task-list"},
-                    state.tasks.map(t=>{
-                      const meta = TYPE_META[t.type];
-                      const effDone = clamp(t.done, 0, t.target);
-                      const gain = effDone * t.importance * meta.multiplier;
-                      const itemPct = t.target>0 ? (effDone/t.target)*100 : 0;
-                      const typeClass = t.type==="PH" ? "ph" : (t.type==="IQ" ? "iq" : "sp");
-                      return h("div", {className:"task", key:t.id},
-                        h("div", {className:"task-top"},
-                          h("div", {style:{minWidth:0}},
-                            h("div", {style:{display:"flex", alignItems:"center", gap:10, flexWrap:"wrap"}},
-                              h("span", {className:`tag ${typeClass}`}, t.type),
-                              h("div", {className:"task-title", title:t.title}, t.title)
-                            ),
-                            h("div", {className:"task-meta"},
-                              h("span", null, `Target: ${t.target}`),
-                              h("span", null, `Importance: ${t.importance}/5`),
-                              h("span", null, `× ${format2(meta.multiplier)}`),
-                              h("span", {style:{opacity:.35}}, "|"),
-                              h("span", null, `GAIN: ${Math.round(gain)} EXP`)
-                            )
-                          ),
-                          h("div", {className:"task-controls"},
-                            h("div", {className:"bar", style:{width:160}}, h("div", {className:"fill", style:{width:`${itemPct}%`}})),
-                            h("input", {
-                              className:"input small",
-                              type:"number",
-                              min:0,
-                              step:1,
-                              value:t.done,
-                              disabled:isLocked,
-                              onChange:(e)=>updateTask(t.id, {done: clamp(Number(e.target.value||0), 0, 999999)})
-                            }),
-                            h("button", {className:"btn", disabled:isLocked, onClick:()=>removeTask(t.id), title:"Remove"}, "✕")
-                          )
-                        )
-                      );
-                    })
-                  )
+            h("div", {className:"card"},
+              h("div", {className:"progress-row"},
+                h("div", null,
+                  h("div", {className:"label"}, "TODAY PROGRESS"),
+                  h("div", {className:"big"}, `${pct(computed.completion)}%`),
+                  h("div", {className:"muted"}, `النسبة عادلة (importance) • EXP اليوم: +${Math.round(computed.exp)}`)
                 ),
-
-                h("div", {className:"card"},
-                  h("div", {className:"label"}, "ADD TASK"),
-                  h("div", {className:"section-title"}, "مهمة جديدة"),
-                  h("div", {className:"muted"}, "حدّد Target وImportance وType ثم ابدأ اللعب."),
-                  h("div", {className:"add-grid"},
-                    h("input", {className:"input", value:newTitle, disabled:isLocked, placeholder:"مثال: دراسة / قرآن / جري", onChange:(e)=>setNewTitle(e.target.value)}),
-                    h("input", {className:"input", type:"number", min:1, value:newTarget, disabled:isLocked, onChange:(e)=>setNewTarget(Number(e.target.value||1))}),
-                    h("select", {className:"input", value:String(newImportance), disabled:isLocked, onChange:(e)=>setNewImportance(Number(e.target.value))},
-                      [1,2,3,4,5].map(v=>h("option",{key:v,value:String(v)},String(v)))
-                    ),
-                    h("select", {className:"input", value:newType, disabled:isLocked, onChange:(e)=>setNewType(e.target.value)},
-                      ["PH","IQ","SP"].map(v=>h("option",{key:v,value:v},v))
-                    ),
-                    h("button", {className:"btn btn-green", disabled:isLocked, onClick:()=>{
-                      addTask(newTitle, newTarget, newImportance, newType);
-                      setNewTitle(""); setNewTarget(10); setNewImportance(3); setNewType("PH");
-                    }}, "+")
+                h("div", {className:"progress-side"},
+                  h("div", {className:"bar"},
+                    h("div", {className:"fill", style:{width:`${pct(computed.completion)}%`}})
                   ),
-                  h("div", {className:"tiny muted", style:{marginTop:10}}, "Multipliers: PH ×2.0 — IQ ×1.7 — SP ×1.5")
+                  h("div", {className:"tiny", style:{marginTop:8}},
+                    h("span", null, "≥ 70% يزيد HP + يُحسب اليوم"),
+                    h("span", null, "< 50% ينقص HP بقوة")
+                  )
                 )
               ),
 
-              h("aside", {className:"right"},
-                h("div", {className:"card"},
-                  h("div", {className:"label"}, "RADAR"),
-                  h("div", {className:"section-title"}, "إحصائياتك الكلية"),
-                  h("div", {className:"muted"}, "الرادار هنا يحسب على كامل الأيام (All-time)."),
-                  h(RadarCanvas, {values: radarAllTime}),
-                  h("div", {className:"mini-stats"},
-                    h("div", {className:"mini"},
-                      h("div", {className:"mini-v"}, radarAllTime.PH, h("span", null, "%")),
-                      h("div", {className:"mini-l"}, TYPE_META.PH.label)
-                    ),
-                    h("div", {className:"mini"},
-                      h("div", {className:"mini-v"}, radarAllTime.IQ, h("span", null, "%")),
-                      h("div", {className:"mini-l"}, TYPE_META.IQ.label)
-                    ),
-                    h("div", {className:"mini"},
-                      h("div", {className:"mini-v"}, radarAllTime.SP, h("span", null, "%")),
-                      h("div", {className:"mini-l"}, TYPE_META.SP.label)
+              h("div", {className:"task-list"},
+                state.tasks.map(t=>{
+                  const target = Math.max(1, Number(t.target||1));
+                  const done = clamp(Number(t.done||0), 0, target);
+                  const itemPct = target>0 ? (done/target)*100 : 0;
+                  const typeClass = t.type==="PH" ? "ph" : (t.type==="IQ" ? "iq" : "sp");
+                  return h("div", {className:"task", key:t.id},
+                    h("div", {className:"task-top"},
+                      h("div", {style:{minWidth:0}},
+                        h("div", {style:{display:"flex", alignItems:"center", gap:10, flexWrap:"wrap"}},
+                          h("span", {className:`tag ${typeClass}`}, `${t.type} • imp ${t.importance}/5`),
+                          h("div", {className:"task-title", title:t.title}, t.title)
+                        ),
+                        h("div", {className:"task-meta"},
+                          h("span", null, `Target: ${t.target}`),
+                          h("span", null, `Done: ${t.done}`),
+                          h("span", null, `Progress: ${pct(itemPct/100)}%`)
+                        )
+                      ),
+                      h("div", {className:"task-controls"},
+                        h("div", {className:"bar", style:{width:160}},
+                          h("div", {className:"fill", style:{width:`${itemPct}%`}})
+                        ),
+                        h("input", {
+                          className:"input small",
+                          type:"number",
+                          min:0,
+                          step:1,
+                          value:t.done,
+                          disabled:isLocked,
+                          onChange:(e)=>updateTask(t.id, {done: clamp(Number(e.target.value||0), 0, 999999)})
+                        }),
+                        h("button", {className:"btn", disabled:isLocked, onClick:()=>removeTask(t.id), title:"Remove"}, "✕")
+                      )
                     )
-                  ),
-                  h("div", {className:"muted", style:{marginTop:10}}, "أيام مغلقة: ", h("span", {className:"mono"}, String(state.daysClosed||0)))
-                ),
+                  );
+                })
+              )
+            ),
 
-                h("div", {className:"card"},
-                  h("div", {className:"label"}, "SYSTEM NOTES"),
-                  h("div", {className:"note"}, "الخلفية متحركة (نجوم + كواكب) بدون التأثير على الأداء."),
-                  h("div", {className:"note"}, "EXP = done × importance × multiplier."),
-                  h("div", {className:"note"}, "اليوم يُحسب للـRANK فقط إذا وصلت ≥ 70%."),
-                  h("div", {className:"note"}, "إذا HP صار 0 → قفل 24 ساعة.")
+            h("div", {className:"card"},
+              h("div", {className:"label"}, "ADD TASK"),
+              h("div", {className:"section-title"}, "مهمة جديدة"),
+              h("div", {className:"muted"}, "الأهمية هي التي تتحكم في الإنصاف."),
+              h("div", {className:"add-grid"},
+                h("input", {className:"input", value:newTitle, disabled:isLocked, placeholder:"مثال: دراسة / قرآن / جري", onChange:(e)=>setNewTitle(e.target.value)}),
+                h("input", {className:"input", type:"number", min:1, value:newTarget, disabled:isLocked, onChange:(e)=>setNewTarget(Number(e.target.value||1))}),
+                h("select", {className:"input", value:String(newImportance), disabled:isLocked, onChange:(e)=>setNewImportance(Number(e.target.value))},
+                  [1,2,3,4,5].map(v=>h("option",{key:v,value:String(v)},String(v)))
+                ),
+                h("select", {className:"input", value:newType, disabled:isLocked, onChange:(e)=>setNewType(e.target.value)},
+                  ["PH","IQ","SP"].map(v=>h("option",{key:v,value:v},v))
+                ),
+                h("button", {className:"btn btn-green", disabled:isLocked, onClick:()=>{
+                  addTask(newTitle, newTarget, newImportance, newType);
+                  setNewTitle(""); setNewTarget(10); setNewImportance(3); setNewType("PH");
+                }}, "+")
+              )
+            )
+          ),
+
+          h("aside", null,
+            h("div", {className:"card"},
+              h("div", {className:"label"}, "RADAR"),
+              h("div", {className:"section-title"}, "إحصائياتك الكلية (Live)"),
+              h("div", {className:"muted"}, "All-time + Today live (يتحدّث فورًا)."),
+              h(RadarCanvas, {values: radarLive}),
+              h("div", {className:"mini-stats"},
+                h("div", {className:"mini"},
+                  h("div", {className:"mini-v"}, radarLive.PH, h("span", null, "%")),
+                  h("div", {className:"mini-l"}, TYPE_META.PH.label)
+                ),
+                h("div", {className:"mini"},
+                  h("div", {className:"mini-v"}, radarLive.IQ, h("span", null, "%")),
+                  h("div", {className:"mini-l"}, TYPE_META.IQ.label)
+                ),
+                h("div", {className:"mini"},
+                  h("div", {className:"mini-v"}, radarLive.SP, h("span", null, "%")),
+                  h("div", {className:"mini-l"}, TYPE_META.SP.label)
                 )
               )
             ),
 
-            h("footer", {className:"footer"},
-              h("div", null, "هذا نموذج — مع حفظ دائم (LocalStorage)."),
-              h("div", null, "RISE SYSTEM™ — Space Background.")
+            h("div", {className:"card"},
+              h("div", {className:"label"}, "SYSTEM NOTES"),
+              h("div", {className:"note"},
+                "• اليوم يُغلق تلقائيًا عند 00:00 ويحفظ النتائج."
+              ),
+              h("div", {className:"note"},
+                "• الإنجاز عادل: يعتمد على Importance (وزن المهمة) وليس على Target."
+              ),
+              h("div", {className:"note"},
+                "• HP Rule: إذا ≥ 70% ⇒ +6 HP + يُحسب يوم التزام. إذا بين 50% و 69% ⇒ -4 HP. إذا < 50% ⇒ -12 HP."
+              ),
+              h("div", {className:"note"},
+                "• إذا HP وصل 0 ⇒ قفل 24 ساعة."
+              ),
+              h("div", {className:"note"},
+                "• EXP: يُحسب من الإنجاز الفعلي داخل المهمة × Importance × Multiplier النوع."
+              ),
+              h("div", {className:"note"},
+                "• RANK حسب أيام الالتزام: D=7، C=30، B=90، A=180، S=365."
+              ),
+              h("div", {className:"note"},
+                "• عقوبة الرانك عند عدم الالتزام: تنقص أيام الالتزام حسب رتبتك (E=0, D=1, C=3, B=7, A=14, S=30)."
+              )
             )
           )
+        ),
+
+        h("footer", {className:"footer"},
+          h("div", null, "حفظ دائم داخل المتصفح (LocalStorage)."),
+          h("div", null, "RISE SYSTEM™ — Solo Leveling vibes, لكن بالواقع.")
         )
       );
     }
