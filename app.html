@@ -387,16 +387,44 @@
     }
     function saveState(s){ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
 
-    function computeToday(tasks){
+    /* ============================================================
+       ✅ NEW: Daily Max EXP + Harsh penalty scaling (no other changes)
+       ============================================================ */
+    function dailyMaxExpByLevel(level){
+      // سقف الربح اليومي: يزيد تدريجياً (منطقي)
+      // L1 ~ 220 / L20 ~ 310 / L50 ~ 410 تقريباً
+      return Math.round(220 + 18 * Math.log2(level + 1) + 0.8 * Math.sqrt(level));
+    }
+
+    function penaltyRatioByLevel(level){
+      // ✅ قاسي جداً بالمستويات المتقدمة:
+      // يبدأ 0.95 ويصعد حتى 2.20 (خصم أكثر من يومين EXP)
+      return clamp(0.95 + (Math.max(1, level) - 1) * 0.03, 0.95, 2.20);
+    }
+
+    function expPenaltyByLevel(level){
+      const dailyMax = dailyMaxExpByLevel(level);
+      return Math.round(dailyMax * penaltyRatioByLevel(level));
+    }
+
+    /* ============================================================
+       ✅ computeToday updated: EXP based on ratios + importance + type
+       ============================================================ */
+    function computeToday(tasks, level){
       const totals = {
         scoreDone: 0,
         scoreTotal: 0,
         completion: 0,
         exp: 0,
+        expMax: 0,
+        weightedProgress: 0,
         byType: {PH:0, IQ:0, SP:0},
         byTypePotential: {PH:0, IQ:0, SP:0},
       };
       const SCORE_UNIT = 10;
+
+      let wSum = 0;
+      let wProg = 0;
 
       for(const t of tasks){
         const importance = Number(t.importance || 1);
@@ -404,19 +432,31 @@
 
         const target = Math.max(1, Number(t.target || 1));
         const done = clamp(Number(t.done || 0), 0, target);
-        const progress = target > 0 ? (done / target) : 0;
+        const ratio = target > 0 ? (done / target) : 0;
 
         totals.scoreTotal += weight;
-        totals.scoreDone += weight * progress;
+        totals.scoreDone += weight * ratio;
 
         const mul = TYPE_META[t.type].multiplier;
-        totals.exp += done * importance * mul;
 
-        totals.byType[t.type] += weight * progress;
+        // Radar accumulators (same idea)
+        totals.byType[t.type] += weight * ratio;
         totals.byTypePotential[t.type] += weight;
+
+        // ✅ EXP weights (independent of target size)
+        const w = importance * mul;
+        wSum += w;
+        wProg += ratio * w;
       }
 
       totals.completion = totals.scoreTotal > 0 ? (totals.scoreDone / totals.scoreTotal) : 0;
+
+      const dailyMax = dailyMaxExpByLevel(level);
+      totals.expMax = dailyMax;
+
+      totals.weightedProgress = wSum > 0 ? (wProg / wSum) : 0;
+      totals.exp = Math.round(totals.weightedProgress * dailyMax);
+
       return totals;
     }
 
@@ -775,9 +815,14 @@
         return ()=>clearTimeout(t);
       }, []);
 
-      const computed = useMemo(()=>computeToday(state.tasks), [state.tasks]);
       const quote = useMemo(()=>randomQuote(state.day), [state.day]);
+
+      // ✅ level first (same as before, just moved before computeToday usage)
       const level = useMemo(()=>expToLevel(state.totalExp), [state.totalExp]);
+
+      // ✅ computeToday now needs current level
+      const computed = useMemo(()=>computeToday(state.tasks, level.level), [state.tasks, level.level]);
+
       const rank = useMemo(()=>rankFromStreak(state.commitDays), [state.commitDays]);
 
       const isLocked = useMemo(()=>{
@@ -837,17 +882,12 @@
         return arr;
       }
 
-      // ✅ عقوبة EXP تزيد مع الـ Level
-      function expPenaltyByLevel(currLevel){
-        // قاعدة: 80 EXP كبداية، وكل 10 ليفل تزيد ~ 25%
-        const base = 80;
-        const scale = 1 + (Math.max(0, currLevel - 1) / 10) * 0.25;
-        return Math.round(base * scale);
-      }
-
       function finalizeDay(){
         setState(prev=>{
-          const totals = computeToday(prev.tasks);
+          // ✅ compute totals with current level (for consistent dailyMax + penalty)
+          const currLevel = expToLevel(prev.totalExp).level;
+          const totals = computeToday(prev.tasks, currLevel);
+
           const completion = totals.completion;
 
           const dayJustClosed = prev.day;
@@ -880,8 +920,7 @@
             SP: prev.lifetimePotentialByType.SP + totals.byTypePotential.SP
           };
 
-          // ✅ Net EXP: إذا نجح اليوم تُضاف، إذا فشل تُنقص (وتزيد العقوبة مع الـ level الحالي)
-          const currLevel = expToLevel(prev.totalExp).level;
+          // ✅ Net EXP: إذا نجح اليوم تُضاف، إذا فشل تُنقص (قاسية مع الليفل)
           const expPenalty = expPenaltyByLevel(currLevel);
           const totalExp = qualifies
             ? (prev.totalExp + expGained)
@@ -941,7 +980,7 @@
                 h("span", {className:"brand-sub"}, "Personal Evolution")
               ),
               h("h1", {className:"title"}, "طوّر شخصيتك… مثل الأنمي"),
-              h("p", {className:"subtitle"}, "أضفنا: نقل منحنيات الالتزام وEXP إلى العمود العريض + Net EXP ينقص إذا اليوم أقل من 70% بعقوبة تزيد مع الـ Level."),
+              h("p", {className:"subtitle"}, "أضفنا: EXP متناسقة بين المهام (نِسَب + أهمية + نوع) + عقوبة قاسية جدًا بالمستويات المتقدمة."),
               h("div", {className:"chips"},
                 h("div", {className:"chip"}, h("span", null, "اليوم:"), h("span", {className:"chip-mono"}, state.day)),
                 state.lastCommitDay ? h("div", {className:"chip"}, h("span", null, "آخر يوم محسوب:"), h("span", {className:"chip-mono"}, state.lastCommitDay)) : null
@@ -1001,8 +1040,8 @@
                 h("div", null,
                   h("div", {className:"label"}, "TODAY PROGRESS"),
                   h("div", {className:"big"}, `${pct(computed.completion)}%`),
-                  h("div", {className:"muted"}, `النسبة عادلة (importance) • EXP اليوم (إذا ≥70%): +${Math.round(computed.exp)}`),
-                  h("div", {className:"muted", style:{marginTop:6}}, `عقوبة Net EXP إذا <70% (حسب Level): -${expPenaltyPreview}`)
+                  h("div", {className:"muted"}, `EXP اليوم (إذا ≥70%): +${Math.round(computed.exp)} / سقف اليوم: ${Math.round(computed.expMax)}`),
+                  h("div", {className:"muted", style:{marginTop:6}}, `عقوبة Net EXP إذا <70% (قاسية حسب Level): -${expPenaltyPreview}`)
                 ),
                 h("div", {className:"progress-side"},
                   h("div", {className:"bar"},
@@ -1075,7 +1114,6 @@
               )
             ),
 
-            /* ✅ نقل: أيام الالتزام + منحناه إلى العمود العريض (هنا) */
             h("div", {className:"card"},
               h("div", {className:"label"}, "COMMIT STATS"),
               h("div", {className:"section-title"}, "أيام الالتزام الحالية + منحناها"),
@@ -1096,11 +1134,10 @@
               h(CommitChart, {points: commitPoints})
             ),
 
-            /* ✅ إضافة: Net EXP + منحنى Net EXP تحت ADD TASK */
             h("div", {className:"card"},
               h("div", {className:"label"}, "NET EXP"),
               h("div", {className:"section-title"}, "صافي EXP المتراكمة + منحناها"),
-              h("div", {className:"muted"}, "تزيد إذا اليوم ≥70%، وتنقص إذا <70% بعقوبة تكبر مع الـ Level."),
+              h("div", {className:"muted"}, "تزيد إذا اليوم ≥70%، وتنقص إذا <70% بعقوبة قاسية تتصاعد مع الـ Level."),
               h("div", {className:"mini-stats"},
                 h("div", {className:"mini"},
                   h("div", {className:"mini-v"}, Math.round(state.totalExp)),
@@ -1147,7 +1184,7 @@
               h("div", {className:"note"}, "• الإنجاز عادل: يعتمد على Importance (وزن المهمة) وليس على Target."),
               h("div", {className:"note"}, "• HP Rule: إذا ≥ 70% ⇒ +6 HP + يُحسب يوم التزام. إذا بين 50% و 69% ⇒ -4 HP. إذا < 50% ⇒ -12 HP."),
               h("div", {className:"note"}, "• إذا HP وصل 0 ⇒ قفل 24 ساعة."),
-              h("div", {className:"note"}, "• Net EXP: إذا ≥70% تُضاف EXP اليوم، وإذا <70% تُخصم EXP بعقوبة تزيد مع الـ Level."),
+              h("div", {className:"note"}, "• Net EXP: إذا ≥70% تُضاف EXP اليوم، وإذا <70% تُخصم EXP بعقوبة قاسية تزيد مع الـ Level."),
               h("div", {className:"note"}, "• RANK حسب أيام الالتزام: D=7، C=30، B=90، A=180، S=365."),
               h("div", {className:"note"}, "• عقوبة الرانك عند عدم الالتزام: تنقص أيام الالتزام حسب رتبتك (E=0, D=1, C=3, B=7, A=14, S=30).")
             )
