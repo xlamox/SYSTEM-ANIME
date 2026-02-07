@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RISE SYSTEM — OBJECT INTRO</title>
+  <title>RISE SYSTEM — OBJECT INTRO (Smooth)</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -467,6 +467,23 @@
       background: #000;
     }
     #scene2Frame.show{ display:block; }
+
+    /* ================= PERFORMANCE MODE ================= */
+    @media (max-width: 820px){
+      .bg{ animation-duration: 22s; filter:none !important; }
+      .bg::before{ filter: blur(16px); opacity:.75; animation-duration: 36s; }
+      .grid{ opacity:.10; background-size: 92px 92px; }
+      .noise{ opacity:.035; }
+
+      .panel{ backdrop-filter: blur(7px); }
+      .shard{ backdrop-filter: blur(5px); }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .bg{ animation:none !important; }
+      .bg::before{ animation:none !important; }
+      .grid{ animation:none !important; }
+      .scanline{ animation:none !important; opacity:.06; }
+    }
   </style>
 </head>
 
@@ -483,7 +500,7 @@
 
   <div id="root"></div>
 
-  <!-- ✅ Scene2 (your code) injected here as an iframe after enter -->
+  <!-- ✅ Scene2 injected here as iframe after enter -->
   <iframe id="scene2Frame" title="SYSTEME scene"></iframe>
 
   <!-- React (CDN) -->
@@ -497,29 +514,31 @@
     const TARGET_APP = "app.html"; // ✅ غيرها إذا ملفك مختلف
 
     /* ============================================================
-       SHARDS (CSS OBJECTS) — autonomous
+       SHARDS (CSS OBJECTS) — lighter on mobile
        ============================================================ */
     (function(){
       const host = document.getElementById("shards");
-      const count = 10;
+      const isMobile = matchMedia("(max-width: 820px)").matches;
+      const count = isMobile ? 6 : 10;
+
       function rnd(min,max){ return min + Math.random()*(max-min); }
 
       for(let i=0;i<count;i++){
         const d = document.createElement("div");
         d.className = "shard";
 
-        const w = rnd(120, 240);
-        const hgt = rnd(180, 340);
+        const w = rnd(isMobile ? 110 : 120, isMobile ? 210 : 240);
+        const hgt = rnd(isMobile ? 160 : 180, isMobile ? 300 : 340);
         d.style.width = w+"px";
         d.style.height = hgt+"px";
 
         d.style.left = rnd(-10, 95)+"%";
         d.style.top  = rnd(-10, 95)+"%";
 
-        const dur = rnd(8, 14);
+        const dur = rnd(isMobile ? 10 : 8, isMobile ? 16 : 14);
         const delay = rnd(-6, 0);
         d.style.animation = `floatShard ${dur}s ease-in-out ${delay}s infinite alternate`;
-        d.style.opacity = rnd(0.22, 0.58);
+        d.style.opacity = rnd(isMobile ? 0.18 : 0.22, isMobile ? 0.46 : 0.58);
 
         host.appendChild(d);
       }
@@ -535,13 +554,15 @@
     })();
 
     /* ============================================================
-       CANVAS OBJECT FX (no mouse) — 3 layers
+       CANVAS OBJECT FX (adaptive + smooth)
        ============================================================ */
     function useObjectFX(){
       const raf = useRef(null);
       const last = useRef(performance.now());
+      const running = useRef(true);
+
       const ribbons = useRef([]);
-      const sparks = useRef([]);
+      const sparks  = useRef([]);
       const meteors = useRef([]);
 
       useEffect(()=>{
@@ -549,121 +570,156 @@
         const cB = document.getElementById("fxB");
         const cC = document.getElementById("fxC");
 
-        const ctxA = cA.getContext("2d", { alpha:true });
-        const ctxB = cB.getContext("2d", { alpha:true });
-        const ctxC = cC.getContext("2d", { alpha:true });
+        const ctxA = cA.getContext("2d", { alpha:true, desynchronized:true });
+        const ctxB = cB.getContext("2d", { alpha:true, desynchronized:true });
+        const ctxC = cC.getContext("2d", { alpha:true, desynchronized:true });
 
-        const DPR = ()=> Math.min(2, window.devicePixelRatio || 1);
         const W = ()=> window.innerWidth;
         const H = ()=> window.innerHeight;
 
-        function resize(){
-          const dpr = DPR();
-          for(const c of [cA,cB,cC]){
-            c.width = Math.floor(W()*dpr);
-            c.height = Math.floor(H()*dpr);
-            c.style.width = W()+"px";
-            c.style.height = H()+"px";
-          }
-          ctxA.setTransform(dpr,0,0,dpr,0,0);
-          ctxB.setTransform(dpr,0,0,dpr,0,0);
-          ctxC.setTransform(dpr,0,0,dpr,0,0);
-        }
-        resize();
-        window.addEventListener("resize", resize);
+        const isMobile = matchMedia("(max-width: 820px)").matches;
+        const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const lowEnd = isMobile || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+
+        const DPR = ()=> {
+          const d = window.devicePixelRatio || 1;
+          if (reduceMotion) return 1;
+          if (lowEnd) return Math.min(1.25, d);
+          return Math.min(1.75, d);
+        };
 
         function rnd(min,max){ return min + Math.random()*(max-min); }
 
+        let ww = W(), hh = H();
+
+        // Precomputed fog gradient
+        let fog = null;
+        function buildFog(){
+          fog = ctxA.createRadialGradient(ww*0.5, hh*0.38, 40, ww*0.5, hh*0.38, Math.max(ww,hh)*0.9);
+          fog.addColorStop(0, "rgba(0,229,255,0.05)");
+          fog.addColorStop(1, "rgba(0,0,0,0)");
+        }
+
         function seed(){
+          const area = ww * hh;
+
+          const rCount = reduceMotion ? 0 : Math.max(4, Math.floor(area / (lowEnd ? 280000 : 190000)));
           const R = [];
-          const rCount = Math.max(5, Math.floor((W()*H())/180000));
           for(let i=0;i<rCount;i++){
-            const baseY = rnd(H()*0.12, H()*0.88);
+            const baseY = rnd(hh*0.15, hh*0.85);
             R.push({
-              x: rnd(-W()*0.2, W()*1.2),
+              x: rnd(-ww*0.2, ww*1.2),
               y: baseY,
-              amp: rnd(20, 70),
-              wav: rnd(0.6, 1.6),
-              sp: rnd(30, 70),
-              w: rnd(1.2, 2.8),
+              amp: rnd(lowEnd ? 16 : 22, lowEnd ? 46 : 70),
+              wav: rnd(0.6, 1.4),
+              sp:  rnd(lowEnd ? 26 : 32, lowEnd ? 52 : 72),
+              w:   rnd(lowEnd ? 1.0 : 1.2, lowEnd ? 2.2 : 2.9),
               hue: Math.random() < 0.5 ? "c1" : "c2",
               t: rnd(0, Math.PI*2),
-              drift: rnd(-18, 18),
+              drift: rnd(lowEnd ? -10 : -18, lowEnd ? 10 : 18),
             });
           }
           ribbons.current = R;
 
+          const sCount = reduceMotion ? 70 : Math.max(110, Math.floor(area / (lowEnd ? 14000 : 9500)));
           const S = [];
-          const sCount = Math.max(180, Math.floor((W()*H())/8500));
           for(let i=0;i<sCount;i++){
             S.push({
-              x: rnd(0,W()),
-              y: rnd(0,H()),
-              r: rnd(0.6, 1.6),
+              x: rnd(0,ww),
+              y: rnd(0,hh),
+              r: rnd(0.6, lowEnd ? 1.35 : 1.7),
               z: rnd(0.1, 1.0),
               tw: rnd(0, Math.PI*2),
-              sp: rnd(18, 52),
             });
           }
           sparks.current = S;
 
+          const mCount = reduceMotion ? 0 : Math.max(4, Math.floor(area / (lowEnd ? 260000 : 180000)));
           const M = [];
-          const mCount = Math.max(7, Math.floor((W()*H())/170000));
           for(let i=0;i<mCount;i++){
             M.push({
-              x: rnd(-W(), W()*1.2),
-              y: rnd(-H()*0.2, H()*1.2),
-              vx: rnd(220, 460),
-              vy: rnd(60, 140),
-              len: rnd(80, 150),
-              life: rnd(0.2, 1.0),
+              x: rnd(-ww, ww*1.2),
+              y: rnd(-hh*0.2, hh*1.2),
+              vx: rnd(lowEnd ? 180 : 220, lowEnd ? 360 : 460),
+              vy: rnd(lowEnd ? 50 : 60,  lowEnd ? 110 : 140),
+              len: rnd(lowEnd ? 60 : 80,  lowEnd ? 120 : 150),
               t: rnd(0, 10),
+              life: rnd(0.2, 1.0),
             });
           }
           meteors.current = M;
         }
-        seed();
+
+        function resize(){
+          ww = W(); hh = H();
+          const dpr = DPR();
+
+          for(const c of [cA,cB,cC]){
+            c.width  = Math.floor(ww * dpr);
+            c.height = Math.floor(hh * dpr);
+            c.style.width  = ww+"px";
+            c.style.height = hh+"px";
+          }
+
+          ctxA.setTransform(dpr,0,0,dpr,0,0);
+          ctxB.setTransform(dpr,0,0,dpr,0,0);
+          ctxC.setTransform(dpr,0,0,dpr,0,0);
+
+          seed();
+          buildFog();
+        }
+
+        window.addEventListener("resize", resize, {passive:true});
+        resize();
+
+        // pause when hidden
+        function onVis(){
+          running.current = !document.hidden;
+          if(running.current){
+            last.current = performance.now();
+            raf.current = requestAnimationFrame(tick);
+          }else{
+            cancelAnimationFrame(raf.current);
+          }
+        }
+        document.addEventListener("visibilitychange", onVis);
 
         function drawRibbons(now, dt){
-          ctxA.clearRect(0,0,W(),H());
+          if(reduceMotion){ ctxA.clearRect(0,0,ww,hh); return; }
 
-          const fog = ctxA.createRadialGradient(W()*0.5, H()*0.38, 40, W()*0.5, H()*0.38, Math.max(W(),H())*0.9);
-          fog.addColorStop(0, "rgba(0,229,255,0.055)");
-          fog.addColorStop(1, "rgba(0,0,0,0)");
-          ctxA.fillStyle = fog;
-          ctxA.fillRect(0,0,W(),H());
+          ctxA.clearRect(0,0,ww,hh);
+          if(fog){
+            ctxA.fillStyle = fog;
+            ctxA.fillRect(0,0,ww,hh);
+          }
+
+          const shadowOn = !lowEnd;
 
           for(const rb of ribbons.current){
             rb.x += rb.sp * dt;
             rb.t += dt * rb.wav;
-            rb.y += Math.sin(now/1000 + rb.t) * dt * rb.drift;
+            rb.y += Math.sin(now*0.001 + rb.t) * dt * rb.drift;
 
-            if(rb.x > W()+240){
+            if(rb.x > ww + 240){
               rb.x = -240;
-              rb.y = rnd(H()*0.12, H()*0.88);
-              rb.amp = rnd(20, 70);
-              rb.wav = rnd(0.6, 1.6);
-              rb.sp = rnd(30, 70);
-              rb.w = rnd(1.2, 2.8);
-              rb.t = rnd(0, Math.PI*2);
-              rb.drift = rnd(-18, 18);
+              rb.y = rnd(hh*0.15, hh*0.85);
+              rb.amp = rnd(lowEnd ? 16 : 22, lowEnd ? 46 : 70);
+              rb.sp  = rnd(lowEnd ? 26 : 32, lowEnd ? 52 : 72);
+              rb.w   = rnd(lowEnd ? 1.0 : 1.2, lowEnd ? 2.2 : 2.9);
+              rb.t   = rnd(0, Math.PI*2);
+              rb.drift = rnd(lowEnd ? -10 : -18, lowEnd ? 10 : 18);
             }
 
-            const a = 0.10 + 0.16*rb.w/2.8;
-            const col = rb.hue === "c1" ? "rgba(0,229,255,"+a+")" : "rgba(168,85,247,"+a+")";
+            const a = 0.09 + 0.14*(rb.w/2.9);
+            const col = rb.hue === "c1" ? `rgba(0,229,255,${a})` : `rgba(168,85,247,${a})`;
 
-            ctxA.beginPath();
-            const y0 = rb.y;
-            const x0 = rb.x;
-
-            const x1 = x0 + 220;
-            const x2 = x0 + 460;
-            const x3 = x0 + 760;
-
+            const y0 = rb.y, x0 = rb.x;
+            const x1 = x0 + 220, x2 = x0 + 460, x3 = x0 + 760;
             const y1 = y0 + Math.sin(rb.t + 0.8)*rb.amp;
             const y2 = y0 + Math.sin(rb.t + 1.7)*rb.amp*0.85;
             const y3 = y0 + Math.sin(rb.t + 2.6)*rb.amp*0.70;
 
+            ctxA.beginPath();
             ctxA.moveTo(x0, y0);
             ctxA.bezierCurveTo(x0+120, y1, x1, y2, x2, y3);
             ctxA.bezierCurveTo(x2+120, y3, x3-120, y2, x3, y1);
@@ -672,65 +728,79 @@
             ctxA.lineWidth = rb.w;
             ctxA.lineCap = "round";
             ctxA.lineJoin = "round";
-            ctxA.shadowBlur = 18;
-            ctxA.shadowColor = col;
-            ctxA.stroke();
 
-            ctxA.shadowBlur = 0;
-            ctxA.strokeStyle = "rgba(255,255,255,0.06)";
-            ctxA.lineWidth = Math.max(0.6, rb.w*0.5);
+            if(shadowOn){
+              ctxA.shadowBlur = 14;
+              ctxA.shadowColor = col;
+            }else{
+              ctxA.shadowBlur = 0;
+            }
             ctxA.stroke();
+            ctxA.shadowBlur = 0;
+
+            if(!lowEnd){
+              ctxA.strokeStyle = "rgba(255,255,255,0.05)";
+              ctxA.lineWidth = Math.max(0.6, rb.w*0.45);
+              ctxA.stroke();
+            }
           }
         }
 
         function drawSparks(now, dt){
-          ctxB.clearRect(0,0,W(),H());
+          ctxB.clearRect(0,0,ww,hh);
+          const time = now*0.001;
+
           for(const p of sparks.current){
-            p.x += (14 + 42*p.z) * dt;
-            p.y += Math.sin((now/1000) + p.tw) * dt * (6 + 18*p.z);
+            p.x += (12 + 36*p.z) * dt;
+            p.y += Math.sin(time + p.tw) * dt * (5 + 14*p.z);
 
-            if(p.x > W()+20) p.x = -20;
-            if(p.y > H()+20) p.y = -20;
-            if(p.y < -20) p.y = H()+20;
+            if(p.x > ww+20) p.x = -20;
+            if(p.y > hh+20) p.y = -20;
+            if(p.y < -20) p.y = hh+20;
 
-            const tw = 0.55 + 0.45*Math.sin((now/1000)*2.6 + p.tw);
-            const a = (0.08 + p.z*0.25) * tw;
+            const tw = 0.55 + 0.45*Math.sin(time*2.2 + p.tw);
+            const a  = (0.06 + p.z*(lowEnd ? 0.18 : 0.22)) * tw;
 
             ctxB.beginPath();
             ctxB.arc(p.x, p.y, p.r*(0.6+p.z), 0, Math.PI*2);
-            ctxB.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
+            ctxB.fillStyle = `rgba(255,255,255,${a})`;
             ctxB.fill();
 
-            if(Math.random() < 0.008){
+            const chance = lowEnd ? 0.003 : 0.007;
+            if(Math.random() < chance){
               ctxB.beginPath();
               ctxB.arc(p.x+2, p.y-1, p.r*0.7, 0, Math.PI*2);
-              ctxB.fillStyle = Math.random()<0.5 ? "rgba(0,229,255,0.18)" : "rgba(168,85,247,0.16)";
+              ctxB.fillStyle = Math.random()<0.5 ? "rgba(0,229,255,0.14)" : "rgba(168,85,247,0.12)";
               ctxB.fill();
             }
           }
         }
 
         function drawMeteors(now, dt){
-          ctxC.clearRect(0,0,W(),H());
+          if(reduceMotion){ ctxC.clearRect(0,0,ww,hh); return; }
+
+          ctxC.clearRect(0,0,ww,hh);
+          const shadowOn = !lowEnd;
+
           for(const k of meteors.current){
             k.t += dt;
             k.x += k.vx * dt;
             k.y += k.vy * dt;
 
-            if(k.x > W()+k.len*2 || k.y > H()+k.len*2 || k.t > 3.2){
-              k.x = rnd(-W()*0.6, W()*0.2);
-              k.y = rnd(-H()*0.2, H()*0.6);
-              k.vx = rnd(220, 460);
-              k.vy = rnd(60, 140);
-              k.len = rnd(80, 150);
+            if(k.x > ww+k.len*2 || k.y > hh+k.len*2 || k.t > 3.2){
+              k.x = rnd(-ww*0.6, ww*0.2);
+              k.y = rnd(-hh*0.2, hh*0.6);
+              k.vx = rnd(lowEnd ? 180 : 220, lowEnd ? 360 : 460);
+              k.vy = rnd(lowEnd ? 50 : 60,  lowEnd ? 110 : 140);
+              k.len = rnd(lowEnd ? 60 : 80,  lowEnd ? 120 : 150);
               k.t = 0;
               k.life = rnd(0.2, 1.0);
             }
 
             const fade = Math.min(1, k.t/0.25) * Math.min(1, (3.0-k.t)/0.7) * k.life;
-            const col = Math.random()<0.5
-              ? `rgba(0,229,255,${(0.14*fade).toFixed(3)})`
-              : `rgba(168,85,247,${(0.12*fade).toFixed(3)})`;
+            const col = (Math.random()<0.5)
+              ? `rgba(0,229,255,${0.12*fade})`
+              : `rgba(168,85,247,${0.10*fade})`;
 
             const ang = Math.atan2(k.vy, k.vx);
             const dx = Math.cos(ang) * k.len;
@@ -740,29 +810,43 @@
             ctxC.moveTo(k.x, k.y);
             ctxC.lineTo(k.x - dx, k.y - dy);
             ctxC.strokeStyle = col;
-            ctxC.lineWidth = 2;
-            ctxC.shadowBlur = 16;
-            ctxC.shadowColor = col;
+            ctxC.lineWidth = lowEnd ? 1.6 : 2;
+
+            if(shadowOn){
+              ctxC.shadowBlur = 12;
+              ctxC.shadowColor = col;
+            }else{
+              ctxC.shadowBlur = 0;
+            }
             ctxC.stroke();
             ctxC.shadowBlur = 0;
           }
         }
 
         function tick(now){
-          const dt = Math.min(0.04, (now - last.current)/1000);
+          if(!running.current) return;
+
+          const dt = Math.min(0.033, (now - last.current)/1000);
           last.current = now;
 
-          drawRibbons(now, dt);
+          if(lowEnd){
+            if(((now/16)|0) % 2 === 0) drawRibbons(now, dt);
+          }else{
+            drawRibbons(now, dt);
+          }
+
           drawSparks(now, dt);
           drawMeteors(now, dt);
 
           raf.current = requestAnimationFrame(tick);
         }
+
         raf.current = requestAnimationFrame(tick);
 
         return ()=>{
           cancelAnimationFrame(raf.current);
           window.removeEventListener("resize", resize);
+          document.removeEventListener("visibilitychange", onVis);
         };
       }, []);
     }
@@ -938,6 +1022,10 @@
       text-transform:uppercase;
       pointer-events:none;
     }
+
+    @media (prefers-reduced-motion: reduce){
+      .mark{opacity:.65}
+    }
   </style>
 </head>
 
@@ -962,18 +1050,30 @@
 <script>
 (() => {
   const c = document.getElementById('fx');
-  const ctx = c.getContext('2d', { alpha:true });
+  const ctx = c.getContext('2d', { alpha:true, desynchronized:true });
 
-  let W=0,H=0,DPR=Math.min(2, devicePixelRatio||1);
+  const isMobile = matchMedia("(max-width: 820px)").matches;
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const lowEnd = isMobile || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+
+  const DPR = () => {
+    const d = window.devicePixelRatio || 1;
+    if (reduceMotion) return 1;
+    if (lowEnd) return Math.min(1.25, d);
+    return Math.min(1.75, d);
+  };
+
+  let W=0,H=0;
   const rand=(a,b)=>a+Math.random()*(b-a);
 
   function resize(){
     W=innerWidth; H=innerHeight;
-    c.width=Math.floor(W*DPR);
-    c.height=Math.floor(H*DPR);
+    const dpr = DPR();
+    c.width=Math.floor(W*dpr);
+    c.height=Math.floor(H*dpr);
     c.style.width=W+'px';
     c.style.height=H+'px';
-    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
   }
   addEventListener('resize', resize, {passive:true});
   resize();
@@ -986,16 +1086,17 @@
     return { x: r.left + r.width/2, y: r.top + r.height/2 };
   }
 
-  const stars = Array.from({length: 520}, () => ({
+  const starCount = reduceMotion ? 160 : (lowEnd ? 320 : 520);
+  const stars = Array.from({length: starCount}, () => ({
     x: Math.random()*W, y: Math.random()*H, z: Math.random(),
-    r: rand(.5, 1.25), tw: rand(0, Math.PI*2)
+    r: rand(.5, lowEnd ? 1.05 : 1.25), tw: rand(0, Math.PI*2)
   }));
 
   const shards=[];
   function burst(n, x, y){
     for(let i=0;i<n;i++){
       const a = rand(0, Math.PI*2);
-      const sp = rand(140, 620);
+      const sp = rand(lowEnd ? 120 : 140, lowEnd ? 460 : 620);
       shards.push({
         x: x + rand(-6,6),
         y: y + rand(-4,4),
@@ -1003,7 +1104,7 @@
         vy: Math.sin(a)*sp,
         life: rand(.28, .85),
         age: 0,
-        r: rand(.8, 2.2),
+        r: rand(.8, lowEnd ? 1.8 : 2.2),
         rot: rand(0, Math.PI*2),
         vr: rand(-10, 10),
       });
@@ -1020,7 +1121,7 @@
 
     setTimeout(()=>{
       const p = center();
-      burst(90, p.x, p.y);
+      burst(lowEnd ? 60 : 90, p.x, p.y);
       glitchBurst(210);
 
       sweep.style.opacity = '1';
@@ -1036,13 +1137,23 @@
   }
   window.addEventListener('load', start);
 
-  let t=0;
   let last=performance.now();
+  let running = true;
+
+  function onVis(){
+    running = !document.hidden;
+    if(running){
+      last = performance.now();
+      requestAnimationFrame(frame);
+    }
+  }
+  document.addEventListener("visibilitychange", onVis);
 
   function frame(now){
+    if(!running) return;
+
     const dt=Math.min(0.033,(now-last)/1000);
     last=now;
-    t += dt;
 
     ctx.clearRect(0,0,W,H);
 
@@ -1124,18 +1235,15 @@
         if(leaving) return;
         setLeaving(true);
 
-        // 1) خروج اللوحة فقط (بدون أي Warp/Zoom)
         const panel = document.getElementById("panel");
         if(panel) panel.classList.add("out");
 
-        // 2) عرض مشهد SYSTEME الذي أرسلته (كما هو) داخل iframe
         const frame = document.getElementById("scene2Frame");
         setTimeout(()=>{
           frame.srcdoc = SCENE2_HTML;
           frame.classList.add("show");
         }, 240);
 
-        // 3) بعد المشهد ينتقل إلى app.html
         setTimeout(()=>{ window.location.href = TARGET_APP; }, 4700);
       }
 
@@ -1180,7 +1288,7 @@
 
               h("div", { className:"echo" },
                 h("div", null, "• Objects • Hologram • Sparks"),
-                h("div", null, "• After Enter → SYSTEME Scene")
+                h("div", null, "• Smooth mode enabled")
               )
             )
           )
