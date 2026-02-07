@@ -282,7 +282,7 @@
       line-height: 1.75;
     }
 
-    /* ===== SYSTEM GLITCH (YOUR STYLE) ===== */
+    /* ===== SYSTEM GLITCH ===== */
     .system{
       font-family:Oxanium, sans-serif;
       letter-spacing:7px;
@@ -449,55 +449,24 @@
     }
 
     /* ===== Exit panel ===== */
-    .out{ animation: out 760ms cubic-bezier(.2,.9,.15,1) forwards; }
+    .out{ animation: out 520ms cubic-bezier(.2,.9,.15,1) forwards; }
     @keyframes out{
       0%{ transform: scale(1); opacity:1; filter: blur(0px); }
-      100%{ transform: scale(1.03); opacity:0; filter: blur(6px); }
+      100%{ transform: scale(1.02); opacity:0; filter: blur(7px); }
     }
 
-    /* ============================================================
-       🚀 WARP ZOOM (after enter) — “into space”
-       ============================================================ */
-    body.warp .bg{
-      animation: warpBG 920ms cubic-bezier(.12,.95,.18,1) forwards;
-      filter: saturate(1.25) contrast(1.05);
+    /* ===== Scene2 iframe overlay ===== */
+    #scene2Frame{
+      position: fixed;
+      inset: 0;
+      border: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      z-index: 9999;
+      background: #000;
     }
-    body.warp canvas#fxA{ animation: warpA 920ms cubic-bezier(.12,.95,.18,1) forwards; }
-    body.warp canvas#fxB{ animation: warpB 920ms cubic-bezier(.12,.95,.18,1) forwards; }
-    body.warp canvas#fxC{ animation: warpC 920ms cubic-bezier(.12,.95,.18,1) forwards; }
-    body.warp .grid{ animation: warpGrid 920ms cubic-bezier(.12,.95,.18,1) forwards; }
-    body.warp .shards{ animation: warpShards 920ms cubic-bezier(.12,.95,.18,1) forwards; }
-    body.warp .vignette{ animation: warpVig 920ms cubic-bezier(.12,.95,.18,1) forwards; }
-
-    @keyframes warpBG{
-      0%{ transform: scale(1) translate3d(0,0,0); filter: hue-rotate(0deg); }
-      55%{ transform: scale(1.25) translate3d(-1.2%, 0.6%, 0); filter: hue-rotate(12deg); }
-      100%{ transform: scale(1.85) translate3d(-3.8%, 1.8%, 0); filter: hue-rotate(18deg) blur(0.2px); }
-    }
-    @keyframes warpA{
-      0%{ transform: scale(1); filter: blur(0px); opacity:1; }
-      100%{ transform: scale(1.55); filter: blur(0.55px); opacity:.95; }
-    }
-    @keyframes warpB{
-      0%{ transform: scale(1); filter: blur(0px); opacity:1; }
-      100%{ transform: scale(1.95); filter: blur(0.9px); opacity:.95; }
-    }
-    @keyframes warpC{
-      0%{ transform: scale(1); filter: blur(0px); opacity:1; }
-      100%{ transform: scale(2.25); filter: blur(1.1px); opacity:1; }
-    }
-    @keyframes warpGrid{
-      0%{ transform: translate3d(0,0,0) scale(1); opacity:.16; }
-      100%{ transform: translate3d(-18px, 12px, 0) scale(1.35); opacity:.06; }
-    }
-    @keyframes warpShards{
-      0%{ transform: translateZ(0) scale(1); filter: blur(0px); opacity:1; }
-      100%{ transform: translateZ(0) scale(1.55); filter: blur(0.7px); opacity:.65; }
-    }
-    @keyframes warpVig{
-      0%{ opacity:1; }
-      100%{ opacity:.92; }
-    }
+    #scene2Frame.show{ display:block; }
   </style>
 </head>
 
@@ -510,10 +479,12 @@
   <div class="grid"></div>
   <div class="noise"></div>
 
-  <!-- CSS 3D shards -->
   <div class="shards" id="shards"></div>
 
   <div id="root"></div>
+
+  <!-- ✅ Scene2 (your code) injected here as an iframe after enter -->
+  <iframe id="scene2Frame" title="SYSTEME scene"></iframe>
 
   <!-- React (CDN) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -531,7 +502,6 @@
     (function(){
       const host = document.getElementById("shards");
       const count = 10;
-
       function rnd(min,max){ return min + Math.random()*(max-min); }
 
       for(let i=0;i<count;i++){
@@ -797,6 +767,328 @@
       }, []);
     }
 
+    /* ============================================================
+       ✅ YOUR SCENE2 HTML (exact) in iframe srcdoc
+       ============================================================ */
+    const SCENE2_HTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SYSTEME — Become a Hero</title>
+  <style>
+    :root{
+      --bg0:#050611;
+      --bg1:#0b0d20;
+      --txt:#f2f7ff;
+      --muted: rgba(242,247,255,.66);
+      --border: rgba(255,255,255,.14);
+      --shadow: 0 40px 120px rgba(0,0,0,.65);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      overflow:hidden;
+      background:
+        radial-gradient(1100px 680px at 68% 24%, rgba(255,255,255,.055), transparent 60%),
+        radial-gradient(900px 700px at 28% 82%, rgba(255,255,255,.035), transparent 58%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+      color:var(--txt);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+
+    .vignette{
+      position:fixed; inset:-25%;
+      pointer-events:none;
+      background: radial-gradient(closest-side at 50% 50%, transparent 40%, rgba(0,0,0,.70) 100%);
+      mix-blend-mode:multiply;
+      filter: blur(2px);
+      opacity:.85;
+    }
+
+    canvas{
+      position:fixed; inset:0;
+      width:100%; height:100%;
+      display:block;
+      opacity:.55;
+    }
+
+    .stage{
+      position:fixed; inset:0;
+      display:grid;
+      place-items:center;
+      pointer-events:none;
+    }
+    .wrap{
+      text-align:center;
+      transform: translateY(8px);
+    }
+
+    .word{
+      position:relative;
+      display:inline-block;
+      font-weight:900;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      font-size: clamp(54px, 8vw, 132px);
+      line-height:1;
+      opacity:0;
+      transform: translateY(14px) scale(.985);
+      filter: blur(12px);
+      text-shadow: 0 18px 90px rgba(0,0,0,.70);
+      transition: opacity .9s ease, transform .9s ease, filter .9s ease;
+      will-change: transform, filter, opacity;
+    }
+    .base{color:rgba(242,247,255,.94);}
+
+    .gl{
+      position:absolute; inset:0;
+      opacity:0;
+      pointer-events:none;
+      mix-blend-mode: screen;
+      overflow:hidden;
+    }
+    .gl::before,
+    .gl::after{
+      content: attr(data-text);
+      position:absolute; inset:0;
+      color: rgba(242,247,255,.92);
+      filter: blur(.2px);
+    }
+
+    .sweep{
+      position:absolute;
+      top:-30%;
+      left:-60%;
+      width:50%;
+      height:160%;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.55), rgba(255,255,255,0));
+      transform: skewX(-18deg);
+      filter: blur(2px);
+      opacity:0;
+      pointer-events:none;
+    }
+
+    .tag{
+      margin-top:18px;
+      font-size: 12px;
+      letter-spacing:.34em;
+      text-transform:uppercase;
+      color: rgba(242,247,255,.60);
+      opacity:0;
+      transform: translateY(10px);
+      transition: opacity .9s ease, transform .9s ease;
+    }
+    .tag b{
+      color: rgba(242,247,255,.82);
+      font-weight:700;
+      letter-spacing:.34em;
+    }
+
+    .rule{
+      width:min(520px, 70vw);
+      height:1px;
+      margin:18px auto 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+      opacity:0;
+      transform: scaleX(.85);
+      transition: opacity .9s ease, transform .9s ease;
+    }
+
+    body.ready .word{
+      opacity:1;
+      transform: translateY(0) scale(1);
+      filter: blur(0px);
+    }
+    body.ready .tag{
+      opacity:1;
+      transform: translateY(0);
+      transition-delay: .25s;
+    }
+    body.ready .rule{
+      opacity:1;
+      transform: scaleX(1);
+      transition-delay: .18s;
+    }
+
+    .burst .gl{opacity:1;}
+    .burst .gl::before{ animation: g1 180ms steps(2) infinite; }
+    .burst .gl::after{  animation: g2 180ms steps(2) infinite; }
+
+    @keyframes g1{
+      0%{clip-path: inset(12% 0 78% 0); transform: translateX(10px)}
+      40%{clip-path: inset(62% 0 22% 0); transform: translateX(-12px)}
+      80%{clip-path: inset(28% 0 56% 0); transform: translateX(8px)}
+      100%{clip-path: inset(0 0 88% 0); transform: translateX(6px)}
+    }
+    @keyframes g2{
+      0%{clip-path: inset(78% 0 8% 0); transform: translateX(-10px)}
+      40%{clip-path: inset(18% 0 64% 0); transform: translateX(12px)}
+      80%{clip-path: inset(8% 0 78% 0); transform: translateX(-8px)}
+      100%{clip-path: inset(90% 0 0 0); transform: translateX(-6px)}
+    }
+
+    .mark{
+      position:fixed;
+      left:18px; bottom:16px;
+      color: rgba(242,247,255,.44);
+      font-size:11px;
+      letter-spacing:.24em;
+      text-transform:uppercase;
+      pointer-events:none;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="fx"></canvas>
+  <div class="vignette"></div>
+
+  <div class="stage">
+    <div class="wrap">
+      <div class="word" id="word">
+        <span class="base" id="base">SYSTEME</span>
+        <span class="gl" id="gl" data-text="SYSTEME"></span>
+        <span class="sweep" id="sweep"></span>
+      </div>
+      <div class="rule" id="rule"></div>
+      <div class="tag" id="tag"><b>BECOME A HERO</b></div>
+    </div>
+  </div>
+
+  <div class="mark">identity // locked</div>
+
+<script>
+(() => {
+  const c = document.getElementById('fx');
+  const ctx = c.getContext('2d', { alpha:true });
+
+  let W=0,H=0,DPR=Math.min(2, devicePixelRatio||1);
+  const rand=(a,b)=>a+Math.random()*(b-a);
+
+  function resize(){
+    W=innerWidth; H=innerHeight;
+    c.width=Math.floor(W*DPR);
+    c.height=Math.floor(H*DPR);
+    c.style.width=W+'px';
+    c.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  addEventListener('resize', resize, {passive:true});
+  resize();
+
+  const word = document.getElementById('word');
+  const sweep = document.getElementById('sweep');
+
+  function center(){
+    const r = word.getBoundingClientRect();
+    return { x: r.left + r.width/2, y: r.top + r.height/2 };
+  }
+
+  const stars = Array.from({length: 520}, () => ({
+    x: Math.random()*W, y: Math.random()*H, z: Math.random(),
+    r: rand(.5, 1.25), tw: rand(0, Math.PI*2)
+  }));
+
+  const shards=[];
+  function burst(n, x, y){
+    for(let i=0;i<n;i++){
+      const a = rand(0, Math.PI*2);
+      const sp = rand(140, 620);
+      shards.push({
+        x: x + rand(-6,6),
+        y: y + rand(-4,4),
+        vx: Math.cos(a)*sp,
+        vy: Math.sin(a)*sp,
+        life: rand(.28, .85),
+        age: 0,
+        r: rand(.8, 2.2),
+        rot: rand(0, Math.PI*2),
+        vr: rand(-10, 10),
+      });
+    }
+  }
+
+  function glitchBurst(ms=180){
+    word.classList.add('burst');
+    setTimeout(()=> word.classList.remove('burst'), ms);
+  }
+
+  function start(){
+    setTimeout(()=> document.body.classList.add('ready'), 420);
+
+    setTimeout(()=>{
+      const p = center();
+      burst(90, p.x, p.y);
+      glitchBurst(210);
+
+      sweep.style.opacity = '1';
+      sweep.animate([
+        { transform:'translateX(-10%) skewX(-18deg)', opacity:0 },
+        { transform:'translateX(220%) skewX(-18deg)', opacity:1 },
+        { transform:'translateX(260%) skewX(-18deg)', opacity:0 }
+      ], { duration: 880, easing:'cubic-bezier(.2,.8,.2,1)', fill:'forwards' });
+    }, 720);
+
+    setTimeout(()=> glitchBurst(140), 1700);
+    setTimeout(()=> glitchBurst(140), 3200);
+  }
+  window.addEventListener('load', start);
+
+  let t=0;
+  let last=performance.now();
+
+  function frame(now){
+    const dt=Math.min(0.033,(now-last)/1000);
+    last=now;
+    t += dt;
+
+    ctx.clearRect(0,0,W,H);
+
+    for(const s of stars){
+      s.tw += dt*(0.5+s.z*1.2);
+      const tw = 0.5+0.5*Math.sin(s.tw);
+      const a  = (0.02+tw*0.08)*(0.35+s.z*0.9);
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255,255,255,'+a+')';
+      ctx.arc(s.x, s.y, s.r*(0.9+(1-s.z)*0.6), 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    for(let i=shards.length-1;i>=0;i--){
+      const p=shards[i];
+      p.age += dt;
+      const k = 1 - p.age/p.life;
+      if(k<=0){ shards.splice(i,1); continue; }
+
+      p.vx *= (1 - dt*2.2);
+      p.vy *= (1 - dt*2.0);
+      p.x += p.vx*dt;
+      p.y += p.vy*dt;
+      p.vy += 320*dt*(1-k);
+      p.rot += p.vr*dt;
+
+      ctx.save();
+      ctx.globalCompositeOperation='lighter';
+      const a = (0.05 + 0.22*k);
+      const r = p.r*(0.9+(1-k)*1.1);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = 'rgba(255,255,255,'+a+')';
+      ctx.fillRect(-r, -r*0.30, r*2, r*0.60);
+      ctx.restore();
+    }
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+})();
+<\/script>
+</body>
+</html>`;
+
     function Intro(){
       useObjectFX();
 
@@ -832,15 +1124,19 @@
         if(leaving) return;
         setLeaving(true);
 
-        // ✅ 1) تشغيل Warp Zoom للخلفية
-        document.body.classList.add("warp");
-
-        // ✅ 2) خروج اللوحة بعد قليل (تزامن سينمائي)
+        // 1) خروج اللوحة فقط (بدون أي Warp/Zoom)
         const panel = document.getElementById("panel");
-        setTimeout(()=>{ if(panel) panel.classList.add("out"); }, 140);
+        if(panel) panel.classList.add("out");
 
-        // ✅ 3) الانتقال بعد انتهاء الزوم/الخروج
-        setTimeout(()=>{ window.location.href = TARGET_APP; }, 940);
+        // 2) عرض مشهد SYSTEME الذي أرسلته (كما هو) داخل iframe
+        const frame = document.getElementById("scene2Frame");
+        setTimeout(()=>{
+          frame.srcdoc = SCENE2_HTML;
+          frame.classList.add("show");
+        }, 240);
+
+        // 3) بعد المشهد ينتقل إلى app.html
+        setTimeout(()=>{ window.location.href = TARGET_APP; }, 4700);
       }
 
       const chipStyle = {
@@ -871,7 +1167,6 @@
                 h("span", { className:"heroWord" }, "HERO")
               ),
 
-              // ✅ ملاحظة متعلقة بالموقع (بدون “هذا مشهد…”)
               h("p", { className:"subline" },
                 "ملاحظة: يتم إغلاق اليوم تلقائيًا عند 00:00 وحفظ النتائج. ",
                 "الرادار يعكس التقدم الكُلّي (مدى الحياة) وليس يومًا واحدًا."
@@ -884,8 +1179,8 @@
               ),
 
               h("div", { className:"echo" },
-                h("div", null, "• Warp Zoom • Objects • Hologram"),
-                h("div", null, "• One File • No Install")
+                h("div", null, "• Objects • Hologram • Sparks"),
+                h("div", null, "• After Enter → SYSTEME Scene")
               )
             )
           )
