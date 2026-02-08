@@ -503,9 +503,59 @@
   <!-- ✅ Scene2 injected here as iframe after enter -->
   <iframe id="scene2Frame" title="SYSTEME scene"></iframe>
 
+  <!-- 🔊 SYSTEM AUDIO (put system.mp3 next to this index.html) -->
+  <audio id="systemAudio" src="system.mp3" preload="auto"></audio>
+
   <!-- React (CDN) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- 🔊 AUDIO CONTROL: start on first interaction, stop on ENTER button -->
+  <script>
+    (function(){
+      const audio = document.getElementById("systemAudio");
+      if(!audio) return;
+
+      let started = false;
+
+      async function startAudio(){
+        if(started) return;
+        try{
+          await audio.play();
+          started = true;
+        }catch(e){
+          // autoplay may be blocked; next interaction typically works
+        }
+      }
+
+      function stopAudio(){
+        try{
+          audio.pause();
+          audio.currentTime = 0;
+        }catch(e){}
+      }
+
+      // Play on first interaction (required by browsers)
+      window.addEventListener("pointerdown", startAudio, { once:true, passive:true });
+      window.addEventListener("keydown", startAudio, { once:true });
+
+      // Stop when clicking ENTER button (capture phase so we stop immediately)
+      document.addEventListener("click", (e) => {
+        const btn = e.target && e.target.closest ? e.target.closest("#enterBtn") : null;
+        if(btn) stopAudio();
+      }, true);
+
+      // Stop on Enter key (your code triggers click anyway; this is extra safety)
+      window.addEventListener("keydown", (e) => {
+        if(e.key === "Enter") stopAudio();
+      }, true);
+
+      // Stop when tab is hidden
+      document.addEventListener("visibilitychange", () => {
+        if(document.hidden) stopAudio();
+      });
+    })();
+  </script>
 
   <script>
     const { useEffect, useMemo, useRef, useState } = React;
@@ -1234,6 +1284,15 @@
       function enter(){
         if(leaving) return;
         setLeaving(true);
+
+        // 🔊 Stop audio immediately on enter
+        try{
+          const a = document.getElementById("systemAudio");
+          if(a){
+            a.pause();
+            a.currentTime = 0;
+          }
+        }catch(e){}
 
         const panel = document.getElementById("panel");
         if(panel) panel.classList.add("out");
