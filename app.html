@@ -377,6 +377,30 @@
       return `${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}:${String(ss).padStart(2,"0")}`;
     }
 
+    // ===== Date helpers (local, safe) =====
+    function parseKey(key){
+      const [y,m,d] = String(key).split("-").map(Number);
+      const dt = new Date(y, (m||1)-1, d||1);
+      dt.setHours(12,0,0,0); // noon => avoids DST edge cases
+      return dt;
+    }
+    function formatKey(dt){
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth()+1).padStart(2,"0");
+      const d = String(dt.getDate()).padStart(2,"0");
+      return `${y}-${m}-${d}`;
+    }
+    function addDaysKey(key, days){
+      const dt = parseKey(key);
+      dt.setDate(dt.getDate() + days);
+      return formatKey(dt);
+    }
+    function diffDaysKey(aKey, bKey){
+      const a = parseKey(aKey).getTime();
+      const b = parseKey(bKey).getTime();
+      return Math.round((b - a) / (24*60*60*1000));
+    }
+
     const STORAGE_KEY = "RISE_SYSTEM_INDEX_FULL_V7";
     function loadState(){
       try{
@@ -387,29 +411,18 @@
     }
     function saveState(s){ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
 
-    /* ============================================================
-       ✅ NEW: Daily Max EXP + Harsh penalty scaling (no other changes)
-       ============================================================ */
+    // ===== EXP scaling (fair daily cap + harsh penalty) =====
     function dailyMaxExpByLevel(level){
-      // سقف الربح اليومي: يزيد تدريجياً (منطقي)
-      // L1 ~ 220 / L20 ~ 310 / L50 ~ 410 تقريباً
       return Math.round(220 + 18 * Math.log2(level + 1) + 0.8 * Math.sqrt(level));
     }
-
     function penaltyRatioByLevel(level){
-      // ✅ قاسي جداً بالمستويات المتقدمة:
-      // يبدأ 0.95 ويصعد حتى 2.20 (خصم أكثر من يومين EXP)
       return clamp(0.95 + (Math.max(1, level) - 1) * 0.03, 0.95, 2.20);
     }
-
     function expPenaltyByLevel(level){
       const dailyMax = dailyMaxExpByLevel(level);
       return Math.round(dailyMax * penaltyRatioByLevel(level));
     }
 
-    /* ============================================================
-       ✅ computeToday updated: EXP based on ratios + importance + type
-       ============================================================ */
     function computeToday(tasks, level){
       const totals = {
         scoreDone: 0,
@@ -438,12 +451,9 @@
         totals.scoreDone += weight * ratio;
 
         const mul = TYPE_META[t.type].multiplier;
-
-        // Radar accumulators (same idea)
         totals.byType[t.type] += weight * ratio;
         totals.byTypePotential[t.type] += weight;
 
-        // ✅ EXP weights (independent of target size)
         const w = importance * mul;
         wSum += w;
         wProg += ratio * w;
@@ -453,7 +463,6 @@
 
       const dailyMax = dailyMaxExpByLevel(level);
       totals.expMax = dailyMax;
-
       totals.weightedProgress = wSum > 0 ? (wProg / wSum) : 0;
       totals.exp = Math.round(totals.weightedProgress * dailyMax);
 
@@ -685,7 +694,6 @@
       );
     }
 
-    // ✅ منحنى Net EXP
     function ExpChart(props){
       const ref = useRef(null);
       const animRef = useRef(null);
@@ -793,15 +801,15 @@
             { id:"t2", title:"Push-ups", target:300, importance:4, type:"PH", done:0 },
             { id:"t3", title:"قراءة", target:30, importance:3, type:"IQ", done:0 },
           ],
-          totalExp: 0,            // ✅ Net EXP (تزيد/تنقص)
+          totalExp: 0,
           hp: 100,
           commitDays: 0,
           lastCommitDay: null,
           lockedUntil: null,
           lifetimeByType: { PH:0, IQ:0, SP:0 },
           lifetimePotentialByType: { PH:0, IQ:0, SP:0 },
-          commitHistory: [],       // {d, v}
-          expHistory: [],          // {d, v}
+          commitHistory: [],
+          expHistory: [],
         };
         if(loaded && typeof loaded === "object") return Object.assign({}, base, loaded);
         return base;
@@ -812,17 +820,12 @@
 
       useEffect(()=>{
         const t = setInterval(()=> setCountdownMs(msToMidnight()), 1000);
-        return ()=>clearTimeout(t);
+        return ()=>clearInterval(t);
       }, []);
 
       const quote = useMemo(()=>randomQuote(state.day), [state.day]);
-
-      // ✅ level first (same as before, just moved before computeToday usage)
       const level = useMemo(()=>expToLevel(state.totalExp), [state.totalExp]);
-
-      // ✅ computeToday now needs current level
       const computed = useMemo(()=>computeToday(state.tasks, level.level), [state.tasks, level.level]);
-
       const rank = useMemo(()=>rankFromStreak(state.commitDays), [state.commitDays]);
 
       const isLocked = useMemo(()=>{
@@ -838,14 +841,6 @@
         const mm = Math.floor((ms%(1000*60*60))/(1000*60));
         return {hh, mm};
       }, [state.lockedUntil, countdownMs]);
-
-      // Auto finalize at midnight
-      useEffect(()=>{
-        const ms = msToMidnight();
-        const to = setTimeout(()=> finalizeDay(), ms + 80);
-        return ()=>clearTimeout(to);
-        // eslint-disable-next-line
-      }, [state.tasks, state.hp, state.totalExp, state.commitDays, state.day]);
 
       function updateTask(id, patch){
         setState(prev => Object.assign({}, prev, {
@@ -882,64 +877,154 @@
         return arr;
       }
 
-      function finalizeDay(){
-        setState(prev=>{
-          // ✅ compute totals with current level (for consistent dailyMax + penalty)
-          const currLevel = expToLevel(prev.totalExp).level;
-          const totals = computeToday(prev.tasks, currLevel);
+      // ========= No-Mercy daily close (supports multi-day catch-up) =========
+      function closeOneDay(prev, dayKeyToClose, totals, qualifies, completion){
+        const failHard = completion < 0.5;
 
-          const completion = totals.completion;
+        // HP
+        const delta = qualifies ? 6 : (failHard ? -12 : -4);
+        const hp = clamp(prev.hp + delta, 0, 100);
 
-          const dayJustClosed = prev.day;
-          const newDay = todayKeyLocal();
+        // Lock: if HP hits 0 at any close, lock from NOW for 24h
+        const lockedUntil = (hp === 0) ? (Date.now() + 24*60*60*1000) : prev.lockedUntil;
 
-          const expGained = Math.round(totals.exp);
-          const qualifies = completion >= 0.7;
-          const failHard = completion < 0.5;
+        // CommitDays
+        const currentRank = rankFromStreak(prev.commitDays).key;
+        const penaltyDays = qualifies ? 0 : (RANK_PENALTY[currentRank] ?? 0);
+        const commitDays = qualifies ? (prev.commitDays + 1) : Math.max(0, prev.commitDays - penaltyDays);
+        const lastCommitDay = qualifies ? dayKeyToClose : prev.lastCommitDay;
 
-          // HP logic (مثل ما هو)
-          const delta = qualifies ? 6 : (failHard ? -12 : -4);
-          const hp = clamp(prev.hp + delta, 0, 100);
-          const lockedUntil = hp === 0 ? (Date.now() + 24*60*60*1000) : null;
+        // Lifetime radar accumulators
+        const lifetimeByType = {
+          PH: prev.lifetimeByType.PH + totals.byType.PH,
+          IQ: prev.lifetimeByType.IQ + totals.byType.IQ,
+          SP: prev.lifetimeByType.SP + totals.byType.SP
+        };
+        const lifetimePotentialByType = {
+          PH: prev.lifetimePotentialByType.PH + totals.byTypePotential.PH,
+          IQ: prev.lifetimePotentialByType.IQ + totals.byTypePotential.IQ,
+          SP: prev.lifetimePotentialByType.SP + totals.byTypePotential.SP
+        };
 
-          // CommitDays logic (مثل ما هو)
-          const currentRank = rankFromStreak(prev.commitDays).key;
-          const penaltyDays = qualifies ? 0 : (RANK_PENALTY[currentRank] ?? 0);
-          const commitDays = qualifies ? (prev.commitDays + 1) : Math.max(0, prev.commitDays - penaltyDays);
-          const lastCommitDay = qualifies ? dayJustClosed : prev.lastCommitDay;
+        // Net EXP
+        const currLevel = expToLevel(prev.totalExp).level;
+        const expPenalty = expPenaltyByLevel(currLevel);
+        const totalExp = qualifies
+          ? (prev.totalExp + Math.round(totals.exp))
+          : Math.max(0, prev.totalExp - expPenalty);
 
-          // Lifetime radar accumulators (مثل ما هو)
-          const lifetimeByType = {
-            PH: prev.lifetimeByType.PH + totals.byType.PH,
-            IQ: prev.lifetimeByType.IQ + totals.byType.IQ,
-            SP: prev.lifetimeByType.SP + totals.byType.SP
-          };
-          const lifetimePotentialByType = {
-            PH: prev.lifetimePotentialByType.PH + totals.byTypePotential.PH,
-            IQ: prev.lifetimePotentialByType.IQ + totals.byTypePotential.IQ,
-            SP: prev.lifetimePotentialByType.SP + totals.byTypePotential.SP
-          };
+        // Reset tasks progress after closing a day
+        const tasks = prev.tasks.map(t => Object.assign({}, t, {done:0}));
 
-          // ✅ Net EXP: إذا نجح اليوم تُضاف، إذا فشل تُنقص (قاسية مع الليفل)
-          const expPenalty = expPenaltyByLevel(currLevel);
-          const totalExp = qualifies
-            ? (prev.totalExp + expGained)
-            : Math.max(0, prev.totalExp - expPenalty);
+        // History points
+        const commitHistory = pushHistory(prev.commitHistory, dayKeyToClose, commitDays);
+        const expHistory = pushHistory(prev.expHistory, dayKeyToClose, totalExp);
 
-          const tasks = prev.tasks.map(t => Object.assign({}, t, {done:0}));
-
-          const commitHistory = pushHistory(prev.commitHistory, dayJustClosed, commitDays);
-          const expHistory = pushHistory(prev.expHistory, dayJustClosed, totalExp);
-
-          return Object.assign({}, prev, {
-            totalExp, hp, lockedUntil,
-            commitDays, lastCommitDay,
-            lifetimeByType, lifetimePotentialByType,
-            day: newDay, tasks,
-            commitHistory, expHistory
-          });
+        return Object.assign({}, prev, {
+          hp,
+          lockedUntil,
+          commitDays,
+          lastCommitDay,
+          lifetimeByType,
+          lifetimePotentialByType,
+          totalExp,
+          tasks,
+          commitHistory,
+          expHistory
         });
       }
+
+      function finalizeDayNoMercy(){
+        setState(prev=>{
+          const today = todayKeyLocal();
+          if(prev.day === today) return prev;
+
+          // Limit catch-up to avoid extreme loops
+          const gap = diffDaysKey(prev.day, today);
+          if(gap <= 0) return Object.assign({}, prev, { day: today });
+
+          const MAX_CATCHUP = 90; // No-Mercy لكن بدون تجميد لو غبت سنوات 😅
+          const safeGap = Math.min(gap, MAX_CATCHUP);
+
+          let s = Object.assign({}, prev);
+
+          // 1) Close the stored day using its saved tasks (last activity)
+          {
+            const currLevel = expToLevel(s.totalExp).level;
+            const totals = computeToday(s.tasks, currLevel);
+            const completion = totals.completion;
+            const qualifies = completion >= 0.7;
+            s = closeOneDay(s, s.day, totals, qualifies, completion);
+          }
+
+          // 2) For each missed day after that: full failure (no activity)
+          // close days: day+1 ... day+(safeGap-1)
+          for(let i=1;i<safeGap;i++){
+            const dayKey = addDaysKey(prev.day, i);
+            // totals = 0 activity (tasks are already reset by previous close)
+            const currLevel = expToLevel(s.totalExp).level;
+            const totals = computeToday(s.tasks, currLevel); // tasks done are 0 => completion 0
+            const completion = 0;
+            const qualifies = false;
+            s = closeOneDay(s, dayKey, totals, qualifies, completion);
+          }
+
+          // 3) Set current day to today (start fresh day)
+          s.day = today;
+
+          return s;
+        });
+      }
+
+      // ========= Auto (midnight + on focus + periodic) =========
+      const finalizeRef = useRef(finalizeDayNoMercy);
+      useEffect(()=>{ finalizeRef.current = finalizeDayNoMercy; });
+
+      useEffect(()=>{
+        let to = null;
+        function scheduleMidnight(){
+          if(to) clearTimeout(to);
+          const ms = msToMidnight();
+          to = setTimeout(()=>{
+            finalizeRef.current();
+            scheduleMidnight();
+          }, ms + 120);
+        }
+        scheduleMidnight();
+
+        const iv = setInterval(()=>{
+          if(todayKeyLocal() !== state.day){
+            finalizeRef.current();
+          }
+        }, 20000);
+
+        function onVis(){
+          if(document.visibilityState === "visible"){
+            if(todayKeyLocal() !== state.day){
+              finalizeRef.current();
+            }
+          }
+        }
+        function onFocus(){
+          if(todayKeyLocal() !== state.day){
+            finalizeRef.current();
+          }
+        }
+        document.addEventListener("visibilitychange", onVis);
+        window.addEventListener("focus", onFocus);
+
+        // Immediate check on load
+        if(todayKeyLocal() !== state.day){
+          finalizeRef.current();
+        }
+
+        return ()=>{
+          if(to) clearTimeout(to);
+          clearInterval(iv);
+          document.removeEventListener("visibilitychange", onVis);
+          window.removeEventListener("focus", onFocus);
+        };
+      }, [state.day]);
 
       const radarLive = useMemo(()=>{
         const g = state.lifetimeByType;
@@ -977,10 +1062,10 @@
               h("div", {className:"badge"},
                 h("span", {className:"dot"}),
                 h("span", {className:"brand-name"}, "RISE SYSTEM™"),
-                h("span", {className:"brand-sub"}, "Personal Evolution")
+                h("span", {className:"brand-sub"}, "No-Mercy Mode")
               ),
               h("h1", {className:"title"}, "طوّر شخصيتك… مثل الأنمي"),
-              h("p", {className:"subtitle"}, "أضفنا: EXP متناسقة بين المهام (نِسَب + أهمية + نوع) + عقوبة قاسية جدًا بالمستويات المتقدمة."),
+              h("p", {className:"subtitle"}, "الغياب يُحسب تلقائيًا كفشل لكل يوم فات. لا مزاح."),
               h("div", {className:"chips"},
                 h("div", {className:"chip"}, h("span", null, "اليوم:"), h("span", {className:"chip-mono"}, state.day)),
                 state.lastCommitDay ? h("div", {className:"chip"}, h("span", null, "آخر يوم محسوب:"), h("span", {className:"chip-mono"}, state.lastCommitDay)) : null
@@ -1025,13 +1110,8 @@
                 h("div", null,
                   h("div", {className:"label"}, "QUOTE OF THE DAY"),
                   h("div", {className:"quote"}, `“${quote}”`),
-                  h("div", {className:"muted", style:{marginTop:8}}, "اليوم يُغلق تلقائيًا عند 00:00.")
-                ),
-                h("button", {
-                  className:"btn btn-ghost",
-                  disabled:isLocked,
-                  onClick:()=>setState(p=>Object.assign({},p,{day:todayKeyLocal()}))
-                }, "تحديث اليوم")
+                  h("div", {className:"muted", style:{marginTop:8}}, "اليوم يُغلق تلقائيًا عند 00:00. الغياب = عقوبة يومية.")
+                )
               )
             ),
 
@@ -1137,7 +1217,7 @@
             h("div", {className:"card"},
               h("div", {className:"label"}, "NET EXP"),
               h("div", {className:"section-title"}, "صافي EXP المتراكمة + منحناها"),
-              h("div", {className:"muted"}, "تزيد إذا اليوم ≥70%، وتنقص إذا <70% بعقوبة قاسية تتصاعد مع الـ Level."),
+              h("div", {className:"muted"}, "تزيد إذا اليوم ≥70%، وتنقص إذا <70% بعقوبة قاسية + الغياب يُعاقَب يوميًا."),
               h("div", {className:"mini-stats"},
                 h("div", {className:"mini"},
                   h("div", {className:"mini-v"}, Math.round(state.totalExp)),
@@ -1181,9 +1261,9 @@
             h("div", {className:"card"},
               h("div", {className:"label"}, "SYSTEM NOTES"),
               h("div", {className:"note"}, "• اليوم يُغلق تلقائيًا عند 00:00 ويحفظ النتائج."),
-              h("div", {className:"note"}, "• الإنجاز عادل: يعتمد على Importance (وزن المهمة) وليس على Target."),
+              h("div", {className:"note"}, "• الغياب: يُحسب كفشل كامل لكل يوم فات (No-Mercy)."),
               h("div", {className:"note"}, "• HP Rule: إذا ≥ 70% ⇒ +6 HP + يُحسب يوم التزام. إذا بين 50% و 69% ⇒ -4 HP. إذا < 50% ⇒ -12 HP."),
-              h("div", {className:"note"}, "• إذا HP وصل 0 ⇒ قفل 24 ساعة."),
+              h("div", {className:"note"}, "• إذا HP وصل 0 ⇒ قفل 24 ساعة يبدأ عند عودتك (الآن)."),
               h("div", {className:"note"}, "• Net EXP: إذا ≥70% تُضاف EXP اليوم، وإذا <70% تُخصم EXP بعقوبة قاسية تزيد مع الـ Level."),
               h("div", {className:"note"}, "• RANK حسب أيام الالتزام: D=7، C=30، B=90، A=180، S=365."),
               h("div", {className:"note"}, "• عقوبة الرانك عند عدم الالتزام: تنقص أيام الالتزام حسب رتبتك (E=0, D=1, C=3, B=7, A=14, S=30).")
@@ -1193,7 +1273,7 @@
 
         h("footer", {className:"footer"},
           h("div", null, "حفظ دائم داخل المتصفح (LocalStorage)."),
-          h("div", null, "RISE SYSTEM™ — Solo Leveling vibes, لكن بالواقع.")
+          h("div", null, "RISE SYSTEM™ — No-Mercy Mode.")
         )
       );
     }
